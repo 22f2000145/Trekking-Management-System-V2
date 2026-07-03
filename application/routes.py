@@ -9,6 +9,12 @@ from application.utils import roles_list
 def home():
     return render_template("index.html")
 
+@app.errorhandler(404)
+def page_not_found(e):
+    if request.path.startswith('/api/'):
+        return jsonify({"message": "API endpoint not found"}), 404
+    return render_template("index.html"), 200
+
 @app.route('/api/admin')
 @auth_required("token")#authentication required for this route, using token authentication
 @roles_required("admin")#authorization required for this route, only users with 'admin' role can access this route

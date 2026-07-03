@@ -1,7 +1,7 @@
 
 import Home from './component/Home.js'
 import Login from './component/Login.js'
-import Register from './component/Register.js'
+import Register from './component/Register.js?v=2'
 import Navbar from './component/Navbar.js'
 import Footer from './component/footer.js'
 import Dashboard from './component/Dashboard.js'
