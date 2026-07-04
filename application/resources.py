@@ -141,6 +141,8 @@ class TrekApi(Resource):
         trek = Trek.query.get(trek_id)
 
         if trek:
+            
+            Booking.query.filter_by(trek_id=trek.id).delete()
 
             db.session.delete(trek)
             db.session.commit()
@@ -175,6 +177,8 @@ class BookingApi(Resource):
             this_booking["id"] = booking.id
             this_booking["trek_id"] = booking.trek_id
             this_booking["user_id"] = booking.user_id
+            this_booking["username"] = booking.trekker.username if booking.trekker else "Unknown"
+            this_booking["trek_name"] = booking.trek.name if booking.trek else "Unknown"
             this_booking["booking_date"] = booking.booking_date
             this_booking["total_amount"] = booking.total_amount
             this_booking["payment_status"] = booking.payment_status

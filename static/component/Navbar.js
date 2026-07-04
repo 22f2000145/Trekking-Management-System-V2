@@ -3,7 +3,7 @@ export default {
     <div class="d-flex flex-wrap justify-content-between align-items-center py-2 px-3 border-bottom bg-white">
         <router-link class="text-decoration-none fw-bold text-success fs-4" to="/">TrekKaro</router-link>
         <div class="d-flex gap-3">
-            <router-link class="text-decoration-none text-dark" v-if="isLoggedIn" to="/dashboard">Dashboard</router-link>
+            <router-link class="text-decoration-none text-dark" v-if="isLoggedIn && (role && !role.includes('admin'))" to="/dashboard">Dashboard</router-link>
             <router-link class="text-decoration-none text-dark" v-if="isLoggedIn && (role && role.includes('admin'))" to="/admin">Admin</router-link>
         </div>
         <div class="d-flex gap-2">
@@ -17,20 +17,20 @@ export default {
         </div>
     </div>
     `,
-    data: function () {
+    data() {
         return {
             isLoggedIn: !!localStorage.getItem('auth-token'),
             role: localStorage.getItem('role')
         }
     },
     watch: {
-        '$route': function () {
+        '$route'() {
             this.isLoggedIn = !!localStorage.getItem('auth-token');
             this.role = localStorage.getItem('role');
         }
     },
     methods: {
-        logout: function () {
+        logout() {
             localStorage.removeItem('auth-token');
             localStorage.removeItem('id');
             localStorage.removeItem('username');

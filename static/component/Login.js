@@ -21,7 +21,7 @@ export default {
         </div>
     </div>
     `,
-    data: function () {
+    data() {
         return {
             message: "",
             formData: {
@@ -29,41 +29,31 @@ export default {
                 password: ""
             }
         }
-
     },
     methods: {
-        loginUser: function () {
+        loginUser() {
             fetch('/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(this.formData)// the content goes to backend in json string
-
+                body: JSON.stringify(this.formData)
             })
-                .then(response => {
-                    if (response.ok) {
-                        return response.json()
-                    } else {
-                        return response.json().then(err => { throw new Error(err.message || 'Login failed') }
-                        )
-                    }
-                })
+                .then(response => response.json())
                 .then(data => {
-                    localStorage.setItem('auth-token', data["auth-token"]);
-                    localStorage.setItem("id", data.id);
-                    localStorage.setItem("username", data.username);
-                    localStorage.setItem("role", JSON.stringify(data.role));
-                    if (data.roles && data.roles.includes("admin")) {
-                        this.$router.push('/admin')
+                    if (data.token) {
+                        localStorage.setItem('auth-token', data.token)
+                        localStorage.setItem("username", data.username)
+                        localStorage.setItem("role", JSON.stringify(data.roles))
+                        if (data.roles && data.roles.includes("admin")) {
+                            this.$router.push('/admin')
+                        } else {
+                            this.$router.push('/dashboard')
+                        }
                     } else {
-                        this.$router.push('/dashboard')
+                        this.message = data.message
                     }
                 })
-                .catch(error => {
-                    console.log('Error while logging in:', error)
-                    this.message = error.message
-                });
         }
     }
 }

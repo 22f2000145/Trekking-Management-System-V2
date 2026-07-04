@@ -18,6 +18,13 @@ export default {
                 <label for="password" class="form-label">Password</label>
                 <input type="password" class="form-control" id="password" placeholder="Enter Your Password" v-model="formData.password">
             </div>
+            <div class="mb-3">
+                <label for="role" class="form-label">Register As</label>
+                <select class="form-select" id="role" v-model="selectedRole">
+                    <option value="user">Trekker (User)</option>
+                    <option value="staff">Trek Staff (Guide)</option>
+                </select>
+            </div>
             <div class="mb-3 form-check">
                 <input type="checkbox" class="form-check-input" id="exampleCheck1">
                 <label class="form-check-label" for="exampleCheck1">Check me out</label>
@@ -27,9 +34,10 @@ export default {
     </div>
 </div>
 `,
-data: function () {
+data() {
     return {
         message: '',
+        selectedRole: 'user',
         formData: {
             username: '',
             email: '',
@@ -38,29 +46,28 @@ data: function () {
     }
 },
 methods: {
-    registerUser: function () {
+    registerUser() {
+        const payload = {
+            username: this.formData.username,
+            email: this.formData.email,
+            password: this.formData.password,
+            roles: [this.selectedRole]
+        }
         fetch('/api/register', {
             method: 'POST',
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(this.formData) //the content goes to backend as json string
+            body: JSON.stringify(payload)
         })
-            .then(response => {
-                if (response.ok) {
-                    return response.json()
-                } else {
-                    return response.json().then(err => { throw new Error(err.message || 'Registration failed') })
-                }
-            })
+            .then(response => response.json())
             .then(data => {
-                this.message = data.message;
-                setTimeout(() => {
-                    this.$router.push('/login')
-                }, 1500)
-            })
-            .catch(error => {
-                this.message = error.message;
+                this.message = data.message
+                if (!data.message.includes("already") && !data.message.includes("missing")) {
+                    setTimeout(() => {
+                        this.$router.push('/login')
+                    }, 1500)
+                }
             })
     }
 }

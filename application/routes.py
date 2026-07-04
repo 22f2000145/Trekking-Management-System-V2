@@ -188,6 +188,122 @@ def reject_staff(user_id):
         }), 200
 
 
+@app.route('/api/admin/stats', methods=['GET'])
+@auth_required("token")
+@roles_required("admin")
+def get_admin_stats():
+    total_treks = Trek.query.count()
+    total_bookings = Booking.query.count()
+    
+    all_users = User.query.all()
+    user_count = 0
+    staff_count = 0
+    pending_staff_count = 0
+    
+    for u in all_users:
+        u_roles = roles_list(u.roles)
+        if "user" in u_roles:
+            user_count += 1
+        if "staff" in u_roles:
+            staff_count += 1
+            if not u.active:
+                pending_staff_count += 1
+                
+    return jsonify({
+        "total_treks": total_treks,
+        "total_bookings": total_bookings,
+        "total_users": user_count,
+        "total_staff": staff_count,
+        "pending_staff_count": pending_staff_count
+    }), 200
+
+
+@app.route('/api/admin/guides', methods=['GET'])
+@auth_required("token")
+@roles_required("admin")
+def get_active_guides():
+    all_users = User.query.filter_by(active=True).all()
+    guides = []
+    for u in all_users:
+        if "staff" in roles_list(u.roles):
+            guides.append({
+                "id": u.id,
+                "username": u.username,
+                "email": u.email
+            })
+    return jsonify(guides), 200
+
+
+@app.route('/api/admin/users', methods=['GET'])
+@auth_required("token")
+@roles_required("admin")
+def get_all_users():
+    all_users = User.query.all()
+    users_list = []
+    for u in all_users:
+        u_roles = roles_list(u.roles)
+        if "admin" in u_roles:
+            continue
+        users_list.append({
+            "id": u.id,
+            "username": u.username,
+            "email": u.email,
+            "active": u.active,
+            "role": u_roles[0] if u_roles else "user"
+        })
+    return jsonify(users_list), 200
+
+
+@app.route('/api/admin/create-staff', methods=['POST'])
+@auth_required("token")
+@roles_required("admin")
+def create_staff_directly():
+    body = request.get_json()
+    username = body.get("username")
+    email = body.get("email")
+    password = body.get("password")
+    
+    if not username or not email or not password:
+        return jsonify({"message": "Username, email and password are required"}), 400
+        
+    existing_user = app.security.datastore.find_user(email=email)
+    if existing_user:
+        return jsonify({"message": "User with this email already exists"}), 400
+        
+    existing_username = User.query.filter_by(username=username).first()
+    if existing_username:
+        return jsonify({"message": "Username already taken"}), 400
+
+    app.security.datastore.create_user(
+        username=username,
+        email=email,
+        password=hash_password(password),
+        active=True,
+        roles=["staff"]
+    )
+    db.session.commit()
+    return jsonify({"message": f"Staff user '{username}' created successfully"}), 201
+
+
+@app.route('/api/admin/toggle-user/<int:user_id>', methods=['POST'])
+@auth_required("token")
+@roles_required("admin")
+def toggle_user_status(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+        
+    if "admin" in roles_list(user.roles):
+        return jsonify({"message": "Cannot toggle admin user status"}), 400
+        
+    user.active = not user.active
+    db.session.commit()
+    
+    status_str = "activated" if user.active else "deactivated/blacklisted"
+    return jsonify({"message": f"User status successfully toggled. User is now {status_str}."}), 200
+
+
+
 
 
     
