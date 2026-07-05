@@ -102,15 +102,30 @@ class TrekApi(Resource):
                 }, 400
         
     @auth_required('token')
-    @roles_accepted("admin")
+    @roles_accepted("admin", "staff")
     def put(self, trek_id):
         args = trek_parser.parse_args()
 
         trek = Trek.query.get(trek_id)
 
-        if trek:
+        if not trek:
+            return {
+                "message": "Trek not found"
+                }, 404
 
-           
+        user_roles = roles_list(current_user.roles)
+
+        if "admin" not in user_roles and "staff" in user_roles:
+            if trek.assigned_guide_id != current_user.id:
+                return {
+                    "message": "you are not authorized to perform this action"
+                }, 403
+
+            if args.get('slots') is not None:
+                trek.slots = args['slots']
+            if args.get('status') is not None:
+                trek.status = args['status']
+        else:
             trek.name = args['name']
             trek.location = args['location']
             trek.difficulty = args['difficulty']
@@ -123,15 +138,11 @@ class TrekApi(Resource):
             trek.assigned_guide_id = args['assigned_guide_id']
             trek.status = args['status']
 
-            db.session.commit()
-
-            return {
-                "message": "Trek updated successfully"
-                }, 200
+        db.session.commit()
 
         return {
-            "message": "Trek not found"
-            }, 404
+            "message": "Trek updated successfully"
+            }, 200
 
         
     @auth_required('token')

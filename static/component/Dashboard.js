@@ -5,8 +5,9 @@ export default {
         {{ message }}
       </div>
 
-      <div class="mb-4">
+      <div class="mb-4 d-flex justify-content-between align-items-center">
         <h4>Welcome, {{ username }}</h4>
+        <router-link to="/update" class="btn btn-outline-secondary btn-sm">Edit Profile</router-link>
       </div>
 
       <div v-if="role.includes('staff')">
