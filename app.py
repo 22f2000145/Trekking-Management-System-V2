@@ -17,7 +17,11 @@ def create_app():
     return app
 
 
+from application.celery_init import celery_init_app
+
 app = create_app()
+celery = celery_init_app(app)
+
 with app.app_context():
     db.create_all()
     app.security.datastore.find_or_create_role(name="admin", description="super user of app")

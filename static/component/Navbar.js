@@ -3,8 +3,8 @@ export default {
     <div class="d-flex flex-wrap justify-content-between align-items-center py-2 px-3 border-bottom bg-white">
         <router-link class="text-decoration-none fw-bold text-success fs-4" to="/">TrekKaro</router-link>
         <div class="d-flex gap-3">
-            <router-link class="text-decoration-none text-dark" v-if="isLoggedIn && (role && !role.includes('admin'))" to="/dashboard">Dashboard</router-link>
-            <router-link class="text-decoration-none text-dark" v-if="isLoggedIn && (role && role.includes('admin'))" to="/admin">Admin</router-link>
+            <router-link class="text-decoration-none text-dark" v-if="isLoggedIn && (role && !role.includes('admin'))" to="/dashboard"></router-link>
+            <router-link class="text-decoration-none text-dark" v-if="isLoggedIn && (role && role.includes('admin'))" to="/admin"></router-link>
         </div>
         <div class="d-flex gap-2">
             <template v-if="!isLoggedIn">

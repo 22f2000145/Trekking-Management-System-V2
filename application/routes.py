@@ -2,8 +2,10 @@ from application.database import db
 from application.models import *
 from flask import current_app as app 
 from flask_security import roles_accepted, roles_required, auth_required, current_user, hash_password, verify_password, login_user
-from flask import jsonify, request, render_template
+from flask import jsonify, request, render_template, send_file
 from application.utils import roles_list
+from celery.result import AsyncResult
+from application.task import export_bookings_csv
 
 @app.route('/')
 def home():
@@ -303,9 +305,16 @@ def toggle_user_status(user_id):
     return jsonify({"message": f"User status successfully toggled. User is now {status_str}."}), 200
 
 
+@app.route('/api/export')
+@auth_required("token")
+@roles_required("admin")
+def export_csv():
+    result = export_bookings_csv.delay()
+    result.get()  # wait for task to finish
+    return send_file("static/" + result.result, as_attachment=True)
 
 
-
+ 
     
 
 

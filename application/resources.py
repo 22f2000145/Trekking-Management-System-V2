@@ -179,18 +179,14 @@ class BookingApi(Resource):
             this_booking["user_id"] = booking.user_id
             this_booking["username"] = booking.trekker.username if booking.trekker else "Unknown"
             this_booking["trek_name"] = booking.trek.name if booking.trek else "Unknown"
+            this_booking["guide_name"] = booking.trek.guide.username if booking.trek and booking.trek.guide else "Not Assigned"
             this_booking["booking_date"] = booking.booking_date
             this_booking["total_amount"] = booking.total_amount
             this_booking["payment_status"] = booking.payment_status
             this_booking["booking_status"] = booking.booking_status
             bookings_json.append(this_booking)
 
-        if bookings_json:
-            return bookings_json, 200
-
-        return {
-            "message": "No bookings found"
-            }, 404
+        return bookings_json, 200
 
     @auth_required("token")
     @roles_accepted('user')

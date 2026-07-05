@@ -1,5 +1,5 @@
 export default {
-    template: `
+  template: `
     <div class="container mt-4">
       <h2 class="text-center mb-4">Admin Dashboard</h2>
 
@@ -207,8 +207,9 @@ export default {
 
       <!-- Bookings & Trek History -->
       <div v-if="currentTab === 'bookings'" class="card mt-4">
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center">
           <h4 class="mb-0">Bookings & Trek History</h4>
+          <button class="btn btn-success btn-sm" @click="exportCSV">Export CSV</button>
         </div>
         <div class="card-body">
           <table class="table table-bordered">
@@ -217,6 +218,7 @@ export default {
                 <th>Booking ID</th>
                 <th>Trek Name</th>
                 <th>Trekker</th>
+                <th>Guide</th>
                 <th>Booking Date</th>
                 <th>Amount</th>
                 <th>Payment Status</th>
@@ -228,6 +230,7 @@ export default {
                 <td>#{{ b.id }}</td>
                 <td>{{ b.trek_name }}</td>
                 <td>{{ b.username }}</td>
+                <td>{{ b.guide_name }}</td>
                 <td>{{ b.booking_date }}</td>
                 <td>₹{{ b.total_amount }}</td>
                 <td>{{ b.payment_status }}</td>
@@ -273,278 +276,281 @@ export default {
       </div>
     </div>
   `,
-    data() {
-        return {
-            currentTab: "stats",
-            message: "",
-            error: "",
-            stats: {
-                total_treks: 0,
-                total_bookings: 0,
-                total_users: 0,
-                total_staff: 0,
-            },
-            pending_staff: [],
-            treks: [],
-            guides: [],
-            users: [],
-            bookings: [],
-            userSearch: "",
-            editMode: false,
-            trekForm: {
-                id: "",
-                name: "",
-                location: "",
-                difficulty: "Easy",
-                duration: "",
-                slots: "",
-                price: "",
-                description: "",
-                start_date: "",
-                end_date: "",
-                status: "Open",
-                assigned_guide_id: ""
-            }
-        }
-    },
-
-    mounted() {
-        this.loadStats()
-        this.loadPendingStaff()
-        this.loadTreks()
-        this.loadGuides()
-        this.loadUsers()
-        this.loadBookings()
-    },
-    methods: {
-        getFilteredUsers() {
-            if (!this.userSearch) return this.users
-            var search = this.userSearch.toLowerCase()
-            var result = []
-            for (var i = 0; i < this.users.length; i++) {
-                var u = this.users[i]
-                if ((u.username && u.username.toLowerCase().includes(search)) ||
-                    (u.email && u.email.toLowerCase().includes(search))) {
-                    result.push(u)
-                }
-            }
-            return result
-        },
-        loadStats() {
-            fetch('/api/admin/stats', {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authentication-Token": localStorage.getItem("auth-token")
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    this.stats = data
-                })
-        },
-        loadPendingStaff() {
-            fetch('/api/admin/pending-staff', {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authentication-Token": localStorage.getItem("auth-token")
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    this.pending_staff = data
-                })
-        },
-        approveStaff(id) {
-            fetch('/api/admin/approve-staff/' + id, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authentication-Token": localStorage.getItem("auth-token")
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    this.message = { text: data.message, type: "success" }
-                    this.loadStats()
-                    this.loadPendingStaff()
-                })
-        },
-        rejectStaff(id) {
-            fetch('/api/admin/reject-staff/' + id, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authentication-Token": localStorage.getItem("auth-token")
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    this.message = { text: data.message, type: "success" }
-                    this.loadStats()
-                    this.loadPendingStaff()
-                })
-        },
-        loadTreks() {
-            fetch('/api/treks', {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authentication-Token": localStorage.getItem("auth-token")
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    this.treks = data
-                })
-        },
-        loadGuides() {
-            fetch('/api/admin/guides', {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authentication-Token": localStorage.getItem("auth-token")
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    this.guides = data
-                })
-        },
-        guideName(id) {
-            if (!id) return "None";
-            for (let i = 0; i < this.guides.length; i++) {
-                if (this.guides[i].id === id) {
-                    return this.guides[i].username;
-                }
-            }
-            return "None";
-        },
-        createTrek() {
-            fetch('/api/treks/create', {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authentication-Token": localStorage.getItem("auth-token")
-                },
-                body: JSON.stringify(this.trekForm)
-            })
-                .then(response => response.json())
-                .then(data => {
-                    this.message = { text: data.message, type: "success" }
-                    this.clearForm()
-                    this.loadTreks()
-                    this.loadStats()
-                })
-        },
-        editTrek(trek) {
-            this.currentTab = 'create'
-            this.editMode = true
-            this.trekForm.id = trek.id
-            this.trekForm.name = trek.name
-            this.trekForm.location = trek.location
-            this.trekForm.difficulty = trek.difficulty
-            this.trekForm.duration = trek.duration
-            this.trekForm.slots = trek.slots
-            this.trekForm.price = trek.price
-            this.trekForm.description = trek.description
-            this.trekForm.start_date = trek.start_date
-            this.trekForm.end_date = trek.end_date
-            this.trekForm.status = trek.status
-            this.trekForm.assigned_guide_id = trek.assigned_guide_id || ""
-        },
-        updateTrek() {
-            fetch('/api/treks/update/' + this.trekForm.id, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authentication-Token": localStorage.getItem("auth-token")
-                },
-                body: JSON.stringify(this.trekForm)
-            })
-                .then(response => response.json())
-                .then(data => {
-                    this.message = { text: data.message, type: "success" }
-                    this.clearForm()
-                    this.loadTreks()
-                })
-        },
-        deleteTrek(id) {
-            if (!confirm("Are you sure you want to delete this trek?")) return;
-            fetch('/api/treks/delete/' + id, {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authentication-Token": localStorage.getItem("auth-token")
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    this.message = { text: data.message, type: "success" }
-                    this.loadTreks()
-                    this.loadStats()
-                })
-        },
-        clearForm() {
-            this.editMode = false
-            this.trekForm.id = ""
-            this.trekForm.name = ""
-            this.trekForm.location = ""
-            this.trekForm.difficulty = "Easy"
-            this.trekForm.duration = ""
-            this.trekForm.slots = ""
-            this.trekForm.price = ""
-            this.trekForm.description = ""
-            this.trekForm.start_date = ""
-            this.trekForm.end_date = ""
-            this.trekForm.status = "Open"
-            this.trekForm.assigned_guide_id = ""
-        },
-        loadUsers() {
-            fetch('/api/admin/users', {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authentication-Token": localStorage.getItem("auth-token")
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    this.users = data
-                })
-        },
-        toggleUserStatus(id) {
-            fetch('/api/admin/toggle-user/' + id, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authentication-Token": localStorage.getItem("auth-token")
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    this.message = { text: data.message, type: "success" }
-                    this.loadUsers()
-                    this.loadStats()
-                })
-        },
-        loadBookings() {
-            fetch('/api/bookings', {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authentication-Token": localStorage.getItem("auth-token")
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.message) {
-                        this.bookings = []
-                    } else {
-                        this.bookings = data
-                    }
-                })
-        }
+  data() {
+    return {
+      currentTab: "stats",
+      message: "",
+      error: "",
+      stats: {
+        total_treks: 0,
+        total_bookings: 0,
+        total_users: 0,
+        total_staff: 0,
+      },
+      pending_staff: [],
+      treks: [],
+      guides: [],
+      users: [],
+      bookings: [],
+      userSearch: "",
+      editMode: false,
+      trekForm: {
+        id: "",
+        name: "",
+        location: "",
+        difficulty: "Easy",
+        duration: "",
+        slots: "",
+        price: "",
+        description: "",
+        start_date: "",
+        end_date: "",
+        status: "Open",
+        assigned_guide_id: ""
+      }
     }
+  },
+
+  mounted() {
+    this.loadStats()
+    this.loadPendingStaff()
+    this.loadTreks()
+    this.loadGuides()
+    this.loadUsers()
+    this.loadBookings()
+  },
+  methods: {
+    getFilteredUsers() {
+      if (!this.userSearch) return this.users
+      var search = this.userSearch.toLowerCase()
+      var result = []
+      for (var i = 0; i < this.users.length; i++) {
+        var u = this.users[i]
+        if ((u.username && u.username.toLowerCase().includes(search)) ||
+          (u.email && u.email.toLowerCase().includes(search))) {
+          result.push(u)
+        }
+      }
+      return result
+    },
+    loadStats() {
+      fetch('/api/admin/stats', {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.stats = data
+        })
+    },
+    loadPendingStaff() {
+      fetch('/api/admin/pending-staff', {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.pending_staff = data
+        })
+    },
+    approveStaff(id) {
+      fetch('/api/admin/approve-staff/' + id, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.message = { text: data.message, type: "success" }
+          this.loadStats()
+          this.loadPendingStaff()
+        })
+    },
+    rejectStaff(id) {
+      fetch('/api/admin/reject-staff/' + id, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.message = { text: data.message, type: "success" }
+          this.loadStats()
+          this.loadPendingStaff()
+        })
+    },
+    loadTreks() {
+      fetch('/api/treks', {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.treks = data
+        })
+    },
+    loadGuides() {
+      fetch('/api/admin/guides', {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.guides = data
+        })
+    },
+    guideName(id) {
+      if (!id) return "None";
+      for (let i = 0; i < this.guides.length; i++) {
+        if (this.guides[i].id === id) {
+          return this.guides[i].username;
+        }
+      }
+      return "None";
+    },
+    createTrek() {
+      fetch('/api/treks/create', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        },
+        body: JSON.stringify(this.trekForm)
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.message = { text: data.message, type: "success" }
+          this.clearForm()
+          this.loadTreks()
+          this.loadStats()
+        })
+    },
+    editTrek(trek) {
+      this.currentTab = 'create'
+      this.editMode = true
+      this.trekForm.id = trek.id
+      this.trekForm.name = trek.name
+      this.trekForm.location = trek.location
+      this.trekForm.difficulty = trek.difficulty
+      this.trekForm.duration = trek.duration
+      this.trekForm.slots = trek.slots
+      this.trekForm.price = trek.price
+      this.trekForm.description = trek.description
+      this.trekForm.start_date = trek.start_date
+      this.trekForm.end_date = trek.end_date
+      this.trekForm.status = trek.status
+      this.trekForm.assigned_guide_id = trek.assigned_guide_id || ""
+    },
+    updateTrek() {
+      fetch('/api/treks/update/' + this.trekForm.id, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        },
+        body: JSON.stringify(this.trekForm)
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.message = { text: data.message, type: "success" }
+          this.clearForm()
+          this.loadTreks()
+        })
+    },
+    deleteTrek(id) {
+      if (!confirm("Are you sure you want to delete this trek?")) return;
+      fetch('/api/treks/delete/' + id, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.message = { text: data.message, type: "success" }
+          this.loadTreks()
+          this.loadStats()
+        })
+    },
+    clearForm() {
+      this.editMode = false
+      this.trekForm.id = ""
+      this.trekForm.name = ""
+      this.trekForm.location = ""
+      this.trekForm.difficulty = "Easy"
+      this.trekForm.duration = ""
+      this.trekForm.slots = ""
+      this.trekForm.price = ""
+      this.trekForm.description = ""
+      this.trekForm.start_date = ""
+      this.trekForm.end_date = ""
+      this.trekForm.status = "Open"
+      this.trekForm.assigned_guide_id = ""
+    },
+    loadUsers() {
+      fetch('/api/admin/users', {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.users = data
+        })
+    },
+    toggleUserStatus(id) {
+      fetch('/api/admin/toggle-user/' + id, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.message = { text: data.message, type: "success" }
+          this.loadUsers()
+          this.loadStats()
+        })
+    },
+    exportCSV() {
+      window.open('/api/export?auth_token=' + localStorage.getItem("auth-token"))
+    },
+    loadBookings() {
+      fetch('/api/bookings', {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.message) {
+            this.bookings = []
+          } else {
+            this.bookings = data
+          }
+        })
+    }
+  }
 }

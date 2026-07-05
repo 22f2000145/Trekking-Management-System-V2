@@ -103,8 +103,10 @@ ipython_config.py
 # pdm.lock
 
 # virtualenv
+.env/
 env/
 venv/
+.venv/
 ENV/
 env.bak/
 venv.bak/
@@ -121,3 +123,6 @@ venv.bak/
 # SQLite databases
 *.db
 *.sqlite
+
+# Exported CSV reports
+static/bookings_report.csv
