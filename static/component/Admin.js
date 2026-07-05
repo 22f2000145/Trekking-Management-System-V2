@@ -11,7 +11,6 @@ export default {
         {{ error }}
       </div>
 
-      <!-- Navigation Tabs -->
       <div class="d-flex justify-content-center gap-2 mb-4 bg-light p-2 rounded">
         <button class="btn btn-sm btn-outline-primary" :class="{'active': currentTab === 'stats'}" @click="currentTab = 'stats'">Statistics</button>
         <button class="btn btn-sm btn-outline-primary" :class="{'active': currentTab === 'treks'}" @click="currentTab = 'treks'">All Treks</button>
@@ -23,7 +22,6 @@ export default {
         </button>
       </div>
 
-      <!-- Statistics -->
       <div v-if="currentTab === 'stats'" class="card mb-4">
         <div class="card-header">
           <h4>Statistics</h4>
@@ -66,7 +64,6 @@ export default {
         </div>
       </div>
 
-      <!-- Pending Staff Registrations -->
       <div v-if="currentTab === 'pending'" class="card">
         <div class="card-header">
           <h4>Pending Staff Registrations</h4>
@@ -94,14 +91,12 @@ export default {
         </div>
       </div>
 
-      <!-- Trek Form -->
       <div v-if="currentTab === 'create'" class="card mt-4">
         <div class="card-header">
           <h4>{{ editMode ? "Edit Trek" : "Create Trek" }}</h4>
         </div>
         <div class="card-body">
           <div class="row">
-            <!-- Form fields -->
             <div class="col-md-4 mb-3">
               <label>Name</label>
               <input class="form-control" v-model="trekForm.name">
@@ -169,7 +164,6 @@ export default {
         </div>
       </div>
 
-      <!-- All Treks -->
       <div v-if="currentTab === 'treks'" class="card mt-4">
         <div class="card-header">
           <h4>All Treks</h4>
@@ -205,7 +199,6 @@ export default {
         </div>
       </div>
 
-      <!-- Bookings & Trek History -->
       <div v-if="currentTab === 'bookings'" class="card mt-4">
         <div class="card-header d-flex justify-content-between align-items-center">
           <h4 class="mb-0">Bookings & Trek History</h4>
@@ -241,7 +234,6 @@ export default {
         </div>
       </div>
 
-      <!-- All Users & Staff -->
       <div v-if="currentTab === 'users'" class="card mt-4">
         <div class="card-header d-flex justify-content-between align-items-center">
           <h4 class="mb-0">All Users & Staff</h4>

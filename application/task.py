@@ -1,7 +1,9 @@
+from datetime import datetime
 from celery import shared_task
 from .models import Booking, Trek, User
 from .database import db
 import csv
+from .utils import format_report, send_email
 
 
 @shared_task(ignore_result=False)
@@ -22,3 +24,39 @@ def export_bookings_csv():
             writer.writerow([booking.id, trek_name, trekker_name, guide_name, booking.booking_date, booking.total_amount, booking.payment_status, booking.booking_status])
 
     return filename
+
+
+
+@shared_task(ignore_result=False, name="monthly_report")
+def monthly_report():
+    users = User.query.all()        
+    for user in users:
+        # Only send reports to users with the 'user' role (trekkers)
+        user_roles = [r.name for r in user.roles]
+        if "user" not in user_roles:
+            continue
+
+        user_data = {}
+        user_data["username"] = user.username
+        user_data["email"] = user.email
+        user_bookings = []
+        for b in user.bookings:
+            this_booking = {}
+            this_booking["id"] = b.id
+            this_booking["trek_name"] = b.trek.name if b.trek else "Unknown"
+            this_booking["booking_date"] = b.booking_date
+            this_booking["payment_status"] = b.payment_status
+            this_booking["total_amount"] = b.total_amount
+            user_bookings.append(this_booking)
+        
+        user_data["bookings"] = user_bookings
+        with open("templates/mail_details.html", "r") as f:
+            template_content = f.read()
+            message = format_report(template_content, {"data": user_data})
+            send_email(user.email, "Monthly Report", message)
+                 
+    return "Monthly Report Sent"
+    
+            
+        
+    

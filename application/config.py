@@ -15,4 +15,10 @@ class LocalDevelopmentConfig(Config):
     SECURITY_CSRF_PROTECT_MECHANISMS = []
     SECURITY_CSRF_IGNORE_UNAUTH_ENDPOINTS = True
     SECURITY_TOKEN_AUTHENTICATION_HEADER = "Authentication-Token"
-    
+
+    # configuration for MailHog
+    SMTP_SERVER_HOST = "localhost"
+    SMTP_SERVER_PORT = 1025
+    SENDER_ADDRESS = "noreply@trekking.com"
+    SENDER_PASSWORD = ""
+

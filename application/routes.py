@@ -312,7 +312,43 @@ def export_csv():
     result = export_bookings_csv.delay()
     result.get()  # wait for task to finish
     return send_file("static/" + result.result, as_attachment=True)
+@app.route('/api/user/profile', methods=['GET', 'PUT'])
+@auth_required("token")
+def user_profile():
+    if request.method == 'GET':
+        return jsonify({
+            "username": current_user.username,
+            "email": current_user.email,
+            "roles": roles_list(current_user.roles)
+        }), 200
 
+    elif request.method == 'PUT':
+        data = request.get_json()
+        username = data.get("username")
+        email = data.get("email")
+        password = data.get("password")
+
+        if not username or not email:
+            return jsonify({"message": "Username and email are required"}), 400
+
+        if username != current_user.username:
+            existing_username = User.query.filter_by(username=username).first()
+            if existing_username:
+                return jsonify({"message": "Username already taken"}), 400
+
+        if email != current_user.email:
+            existing_email = User.query.filter_by(email=email).first()
+            if existing_email:
+                return jsonify({"message": "Email already in use"}), 400
+
+        current_user.username = username
+        current_user.email = email
+
+        if password:
+            current_user.password = hash_password(password)
+
+        db.session.commit()
+        return jsonify({"message": "Profile updated successfully"}), 200
 
  
     

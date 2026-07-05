@@ -1,5 +1,5 @@
 export default {
-    template: `
+  template: `
     <div class="container mt-4">
       <div v-if="message" class="alert alert-success">
         {{ message }}
@@ -9,9 +9,7 @@ export default {
         <h4>Welcome, {{ username }}</h4>
       </div>
 
-      <!-- STAFF DASHBOARD VIEW -->
       <div v-if="role.includes('staff')">
-        <!-- Assigned Treks -->
         <div class="card mb-4">
           <div class="card-header">
             <h4>My Assigned Treks</h4>
@@ -45,7 +43,6 @@ export default {
           </div>
         </div>
 
-        <!-- Inline Status/Slots Form for Staff -->
         <div v-if="editTrekMode" class="card mb-4">
           <div class="card-header">
             <h4>Update Trek Details: {{ trekForm.name }}</h4>
@@ -72,7 +69,6 @@ export default {
           </div>
         </div>
 
-        <!-- Trekkers List for Staff -->
         <div v-if="viewParticipants" class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
             <h4>Trekkers List (Trek ID: {{ selectedTrekId }})</h4>
@@ -103,9 +99,7 @@ export default {
         </div>
       </div>
 
-      <!-- TREKKER (USER) DASHBOARD VIEW -->
       <div v-else>
-        <!-- Available Treks -->
         <div class="card mb-4">
           <div class="card-header d-flex justify-content-between align-items-center">
             <h4>Available Treks</h4>
@@ -141,7 +135,6 @@ export default {
           </div>
         </div>
 
-        <!-- My Bookings -->
         <div class="card">
           <div class="card-header">
             <h4>My Bookings</h4>
@@ -179,159 +172,159 @@ export default {
       </div>
     </div>
     `,
-    data() {
-        return {
-            username: localStorage.getItem("username") || "User",
-            role: localStorage.getItem("role") || "",
-            message: "",
-            treks: [],
-            bookings: [],
-            trekSearch: "",
-            editTrekMode: false,
-            trekForm: {
-                id: "",
-                name: "",
-                slots: "",
-                status: "Open"
-            },
-            viewParticipants: false,
-            selectedTrekId: ""
-        }
-    },
-
-    mounted() {
-        this.loadTreks()
-        this.loadBookings()
-    },
-    methods: {
-        getFilteredTreks() {
-            if (!this.trekSearch) return this.treks
-            var search = this.trekSearch.toLowerCase()
-            var result = []
-            for (var i = 0; i < this.treks.length; i++) {
-                var t = this.treks[i]
-                if ((t.name && t.name.toLowerCase().includes(search)) ||
-                    (t.location && t.location.toLowerCase().includes(search))) {
-                    result.push(t)
-                }
-            }
-            return result
-        },
-        getFilteredBookings() {
-            if (!this.selectedTrekId) return []
-            var result = []
-            for (var i = 0; i < this.bookings.length; i++) {
-                if (this.bookings[i].trek_id === this.selectedTrekId) {
-                    result.push(this.bookings[i])
-                }
-            }
-            return result
-        },
-        loadTreks() {
-            fetch('/api/treks', {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authentication-Token": localStorage.getItem("auth-token")
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.message) {
-                        this.treks = []
-                    } else {
-                        this.treks = data
-                    }
-                })
-        },
-        loadBookings() {
-            fetch('/api/bookings', {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authentication-Token": localStorage.getItem("auth-token")
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.message) {
-                        this.bookings = []
-                    } else {
-                        this.bookings = data
-                    }
-                })
-        },
-        editTrek(trek) {
-            this.editTrekMode = true
-            this.trekForm.id = trek.id
-            this.trekForm.name = trek.name
-            this.trekForm.slots = trek.slots
-            this.trekForm.status = trek.status
-        },
-        clearTrekForm() {
-            this.editTrekMode = false
-            this.trekForm = { id: "", name: "", slots: "", status: "Open" }
-        },
-        updateTrek() {
-            fetch('/api/treks/update/' + this.trekForm.id, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authentication-Token": localStorage.getItem("auth-token")
-                },
-                body: JSON.stringify(this.trekForm)
-            })
-                .then(response => response.json())
-                .then(data => {
-                    this.message = data.message
-                    this.clearTrekForm()
-                    this.loadTreks()
-                })
-        },
-        loadParticipants(trekId) {
-            this.selectedTrekId = trekId
-            this.viewParticipants = true
-            this.loadBookings()
-        },
-        bookTrek(trek) {
-            fetch('/api/bookings/create', {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authentication-Token": localStorage.getItem("auth-token")
-                },
-                body: JSON.stringify({
-                    trek_id: trek.id,
-                    total_amount: trek.price,
-                    payment_status: "Pending",
-                    booking_status: "Pending"
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    this.message = data.message
-                    this.loadTreks()
-                    this.loadBookings()
-                })
-        },
-        payBooking(bookingId) {
-            fetch('/api/bookings/update/' + bookingId, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authentication-Token": localStorage.getItem("auth-token")
-                },
-                body: JSON.stringify({
-                    payment_status: "Paid",
-                    booking_status: "Booked"
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    this.message = data.message
-                    this.loadBookings()
-                    this.loadTreks()
-                })
-        }
+  data() {
+    return {
+      username: localStorage.getItem("username") || "User",
+      role: localStorage.getItem("role") || "",
+      message: "",
+      treks: [],
+      bookings: [],
+      trekSearch: "",
+      editTrekMode: false,
+      trekForm: {
+        id: "",
+        name: "",
+        slots: "",
+        status: "Open"
+      },
+      viewParticipants: false,
+      selectedTrekId: ""
     }
+  },
+
+  mounted() {
+    this.loadTreks()
+    this.loadBookings()
+  },
+  methods: {
+    getFilteredTreks() {
+      if (!this.trekSearch) return this.treks
+      var search = this.trekSearch.toLowerCase()
+      var result = []
+      for (var i = 0; i < this.treks.length; i++) {
+        var t = this.treks[i]
+        if ((t.name && t.name.toLowerCase().includes(search)) ||
+          (t.location && t.location.toLowerCase().includes(search))) {
+          result.push(t)
+        }
+      }
+      return result
+    },
+    getFilteredBookings() {
+      if (!this.selectedTrekId) return []
+      var result = []
+      for (var i = 0; i < this.bookings.length; i++) {
+        if (this.bookings[i].trek_id === this.selectedTrekId) {
+          result.push(this.bookings[i])
+        }
+      }
+      return result
+    },
+    loadTreks() {
+      fetch('/api/treks', {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.message) {
+            this.treks = []
+          } else {
+            this.treks = data
+          }
+        })
+    },
+    loadBookings() {
+      fetch('/api/bookings', {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.message) {
+            this.bookings = []
+          } else {
+            this.bookings = data
+          }
+        })
+    },
+    editTrek(trek) {
+      this.editTrekMode = true
+      this.trekForm.id = trek.id
+      this.trekForm.name = trek.name
+      this.trekForm.slots = trek.slots
+      this.trekForm.status = trek.status
+    },
+    clearTrekForm() {
+      this.editTrekMode = false
+      this.trekForm = { id: "", name: "", slots: "", status: "Open" }
+    },
+    updateTrek() {
+      fetch('/api/treks/update/' + this.trekForm.id, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        },
+        body: JSON.stringify(this.trekForm)
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.message = data.message
+          this.clearTrekForm()
+          this.loadTreks()
+        })
+    },
+    loadParticipants(trekId) {
+      this.selectedTrekId = trekId
+      this.viewParticipants = true
+      this.loadBookings()
+    },
+    bookTrek(trek) {
+      fetch('/api/bookings/create', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        },
+        body: JSON.stringify({
+          trek_id: trek.id,
+          total_amount: trek.price,
+          payment_status: "Pending",
+          booking_status: "Pending"
+        })
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.message = data.message
+          this.loadTreks()
+          this.loadBookings()
+        })
+    },
+    payBooking(bookingId) {
+      fetch('/api/bookings/update/' + bookingId, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        },
+        body: JSON.stringify({
+          payment_status: "Paid",
+          booking_status: "Booked"
+        })
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.message = data.message
+          this.loadBookings()
+          this.loadTreks()
+        })
+    }
+  }
 }

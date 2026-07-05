@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trek Bookings Report</title>
+</head>
+<body>
+    <div>
+        <h1>Trek Booking Report</h1>
+        <p>Hello {{ data['username'] }}</p>
+        <p>Please refer to the monthly trek bookings made by you this month</p>
+        
+        <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%;">
+            <thead>
+                <tr style="background-color: #f2f2f2;">
+                    <th>Sr No</th>
+                    <th>Booking ID</th>
+                    <th>Trek Name</th>
+                    <th>Booking Date</th>
+                    <th>Payment Status</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in data['bookings'] %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>#{{ b['id'] }}</td>
+                    <td>{{ b['trek_name'] }}</td>
+                    <td>{{ b['booking_date'] }}</td>
+                    <td>{{ b['payment_status'] }}</td>
+                    <td>Rs. {{ b['total_amount'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <p style="margin-top: 20px;">
+            Thank you for using Trekking Management System.
+        </p>
+        <hr>
+        <p style="text-align: center; color: #888888; font-size: 12px;">
+            Trekking Management System | &copy; Copyright 2026 | Created at IITM
+        </p>
+    </div>
+</body>
+</html>
