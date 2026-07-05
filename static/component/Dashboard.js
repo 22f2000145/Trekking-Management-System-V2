@@ -102,8 +102,17 @@ export default {
       <div v-else>
         <div class="card mb-4">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <h4>Available Treks</h4>
-            <input type="text" class="form-control form-control-sm w-25" placeholder="Search location..." v-model="trekSearch">
+            <h4 class="mb-0">Available Treks</h4>
+            <div class="d-flex gap-2 w-75 justify-content-end">
+              <input type="text" class="form-control form-control-sm w-30" placeholder="Search name/location..." v-model="trekSearch">
+              <select class="form-select form-select-sm w-25" v-model="difficultyFilter">
+                <option value="">All Difficulties</option>
+                <option value="Easy">Easy</option>
+                <option value="Moderate">Moderate</option>
+                <option value="Hard">Hard</option>
+              </select>
+              <input type="number" class="form-control form-control-sm w-25" placeholder="Max duration (days)..." v-model="durationFilter">
+            </div>
           </div>
           <div class="card-body">
             <table class="table table-bordered">
@@ -112,7 +121,7 @@ export default {
                   <th>Name</th>
                   <th>Location</th>
                   <th>Difficulty</th>
-                  <th>Duration</th>
+                  <th>Duration (Days)</th>
                   <th>Slots</th>
                   <th>Price</th>
                   <th>Action</th>
@@ -123,7 +132,7 @@ export default {
                   <td>{{ trek.name }}</td>
                   <td>{{ trek.location }}</td>
                   <td>{{ trek.difficulty }}</td>
-                  <td>{{ trek.duration }}</td>
+                  <td>{{ trek.duration }} Days</td>
                   <td>{{ trek.slots }}</td>
                   <td>₹{{ trek.price }}</td>
                   <td>
@@ -180,6 +189,8 @@ export default {
       treks: [],
       bookings: [],
       trekSearch: "",
+      difficultyFilter: "",
+      durationFilter: "",
       editTrekMode: false,
       trekForm: {
         id: "",
@@ -198,17 +209,17 @@ export default {
   },
   methods: {
     getFilteredTreks() {
-      if (!this.trekSearch) return this.treks
-      var search = this.trekSearch.toLowerCase()
-      var result = []
-      for (var i = 0; i < this.treks.length; i++) {
-        var t = this.treks[i]
-        if ((t.name && t.name.toLowerCase().includes(search)) ||
-          (t.location && t.location.toLowerCase().includes(search))) {
-          result.push(t)
-        }
-      }
-      return result
+      return this.treks.filter(t => {
+        const matchSearch = !this.trekSearch ||
+          (t.name && t.name.toLowerCase().includes(this.trekSearch.toLowerCase())) ||
+          (t.location && t.location.toLowerCase().includes(this.trekSearch.toLowerCase()));
+
+        const matchDifficulty = !this.difficultyFilter || t.difficulty === this.difficultyFilter;
+
+        const matchDuration = !this.durationFilter || parseInt(t.duration) <= parseInt(this.durationFilter);
+
+        return matchSearch && matchDifficulty && matchDuration;
+      });
     },
     getFilteredBookings() {
       if (!this.selectedTrekId) return []

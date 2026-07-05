@@ -114,7 +114,7 @@ export default {
               </select>
             </div>
             <div class="col-md-3 mb-3">
-              <label>Duration</label>
+              <label>Duration (Days)</label>
               <input type="number" class="form-control" v-model="trekForm.duration">
             </div>
             <div class="col-md-3 mb-3">
