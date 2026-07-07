@@ -216,6 +216,7 @@ export default {
                 <th>Amount</th>
                 <th>Payment Status</th>
                 <th>Booking Status</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -228,6 +229,11 @@ export default {
                 <td>₹{{ b.total_amount }}</td>
                 <td>{{ b.payment_status }}</td>
                 <td>{{ b.booking_status }}</td>
+                <td>
+                  <button v-if="b.payment_status === 'Pending Verification'" class="btn btn-success btn-sm" @click="approvePayment(b.id)">Approve Payment</button>
+                  <span v-else-if="b.payment_status === 'Paid'" class="badge bg-success">Approved</span>
+                  <span v-else class="text-muted">-</span>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -542,6 +548,24 @@ export default {
           } else {
             this.bookings = data
           }
+        })
+    },
+    approvePayment(bookingId) {
+      fetch('/api/bookings/update/' + bookingId, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        },
+        body: JSON.stringify({
+          payment_status: "Paid"
+        })
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.message = { text: data.message, type: "success" }
+          this.loadBookings()
+          this.loadStats()
         })
     }
   }

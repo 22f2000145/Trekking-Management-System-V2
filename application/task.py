@@ -4,6 +4,7 @@ from .models import Booking, Trek, User
 from .database import db
 import csv
 from .utils import format_report, send_email
+import requests
 
 
 @shared_task(ignore_result=False)
@@ -31,7 +32,6 @@ def export_bookings_csv():
 def monthly_report():
     users = User.query.all()        
     for user in users:
-        # Only send reports to users with the 'user' role (trekkers)
         user_roles = [r.name for r in user.roles]
         if "user" not in user_roles:
             continue
@@ -56,6 +56,14 @@ def monthly_report():
             send_email(user.email, "Monthly Report", message)
                  
     return "Monthly Report Sent"
+
+
+@shared_task(ignore_result=False, name="update_message")
+def update_message(username):
+    text = f"Hi {username}, your trek booking status has been updated. Please check the app at http://127.0.0.1:5000"
+    response = requests.post("https://chat.googleapis.com/v1/spaces/AAQAv5fyRZU/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=Rk_uDehQBZYtCEKPg8lTqr0oATRlaxgQyXC4cqHO0p4", json = {"text": text})
+    print(response.status_code)
+    return "The booking update is sent to user"
     
             
         

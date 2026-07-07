@@ -5,8 +5,11 @@ from application.models import *
 from flask_security import auth_required, roles_accepted, current_user
 from datetime import datetime
 from application.utils import roles_list
+from flask_caching import Cache
 
 api = Api()
+
+cache = Cache()
 
 trek_parser = reqparse.RequestParser()
 trek_parser.add_argument("name")
@@ -91,6 +94,7 @@ class TrekApi(Resource):
 
             db.session.add(trek)
             db.session.commit()
+            cache.delete('treks_data')
 
             return {
                 "message": "Trek created successfully"
@@ -139,6 +143,7 @@ class TrekApi(Resource):
             trek.status = args['status']
 
         db.session.commit()
+        cache.delete('treks_data')
 
         return {
             "message": "Trek updated successfully"
@@ -157,6 +162,7 @@ class TrekApi(Resource):
 
             db.session.delete(trek)
             db.session.commit()
+            cache.delete('treks_data')
 
             return {
                 "message": "deleted successfully"
@@ -245,55 +251,60 @@ class BookingApi(Resource):
             },400
 
     @auth_required('token')
-    @roles_accepted('user')
+    @roles_accepted('user', 'admin')
     def put(self, booking_id):
         booking = Booking.query.get(booking_id)
 
         if not booking:
             return {
                 "message": "booking not found"
-            },404
+            }, 404
             
-        if booking.user_id != current_user.id:
-            return {
-                "message": "you are not authorized to perform this action"
-            }, 403
+        user_roles = roles_list(current_user.roles)
+
+        if "admin" not in user_roles:
+            if booking.user_id != current_user.id:
+                return {
+                    "message": "you are not authorized to perform this action"
+                }, 403
 
         args = book.parse_args()
         trek = Trek.query.get(booking.trek_id)
         if not trek:
             return {
                 "message": "trek not found"
-            },404
+            }, 404
 
         if booking.booking_status == "Cancelled":
             return {
                 "message": "already cancelled"
             }, 400
 
-        if args['payment_status'] == 'Paid' and booking.payment_status != 'Paid':
-            if trek.slots > 0:
-                trek.slots -= 1
-                booking.payment_status = args['payment_status']
-                booking.booking_status = "Booked"
+        if "admin" in user_roles:
+            if args['payment_status'] == 'Paid' and booking.payment_status != 'Paid':
+                if trek.slots > 0:
+                    trek.slots -= 1
+                    booking.payment_status = 'Paid'
+                    booking.booking_status = "Booked"
+                    db.session.commit()
+                    cache.delete('treks_data')
+                    from application.task import update_message
+                    update_message.delay(booking.trekker.username)
+                    return {
+                        "message": "Booking confirmed"
+                    }, 200
+                else:
+                    return {
+                        "message": "No slots available"
+                    }, 400
+        else:
+            if args['payment_status'] == 'Paid' and booking.payment_status == 'Pending':
+                booking.payment_status = 'Pending Verification'
+                booking.booking_status = 'Pending Verification'
                 db.session.commit()
                 return {
-                    "message": "Booking confirmed"
+                    "message": "Payment sent for Admin verification"
                 }, 200
-            else:
-                return {
-                    "message": "No slots available"
-                }, 400
-
-        elif args['payment_status'] == 'Pending' and booking.payment_status == 'Paid':
-            return {
-                "message": "Cannot cancel paid booking"
-            }, 400
-
-        elif args['payment_status'] == 'Pending' and booking.payment_status == 'Pending':
-            return {
-                "message": "already pending"
-            }, 400
 
         return {
             "message": "unable to update the booking"

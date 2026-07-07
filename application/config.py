@@ -22,3 +22,8 @@ class LocalDevelopmentConfig(Config):
     SENDER_ADDRESS = "noreply@trekking.com"
     SENDER_PASSWORD = ""
 
+    # config for Cache
+    CACHE_TYPE = "RedisCache"
+    CACHE_REDIS_URL = "redis://localhost:6379/2"
+    CACHE_DEFAULT_TIMEOUT = 300
+

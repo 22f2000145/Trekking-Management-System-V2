@@ -171,7 +171,8 @@ export default {
                   <td>{{ b.booking_status }}</td>
                   <td>{{ b.payment_status }}</td>
                   <td>
-                    <button v-if="b.payment_status !== 'Paid'" class="btn btn-success btn-sm" @click="payBooking(b.id)">Pay Now</button>
+                    <button v-if="b.payment_status === 'Pending'" class="btn btn-success btn-sm" @click="payBooking(b.id)">Pay Now</button>
+                    <span v-else-if="b.payment_status === 'Pending Verification'" class="badge bg-warning text-dark">Pending Verification</span>
                     <span v-else class="badge bg-success">Confirmed</span>
                   </td>
                 </tr>
