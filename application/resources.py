@@ -38,19 +38,28 @@ class TrekApi(Resource):
     @auth_required("token")
     @roles_accepted("user","admin","staff")
     def get(self):
+        user_roles = roles_list(current_user.roles)
+        is_regular_user = True
+        for r in user_roles:
+            if r == "admin" or r == "staff":
+                is_regular_user = False
+
+        if is_regular_user:
+            cached_data = cache.get('treks_data')
+            if cached_data is not None:
+                return cached_data, 200
+
         treks=[]
-        if "admin" in roles_list(current_user.roles):
+        if "admin" in user_roles:
             treks = Trek.query.all()
-        elif "staff" in roles_list(current_user.roles):
+        elif "staff" in user_roles:
             treks = Trek.query.filter_by(assigned_guide_id=current_user.id).all()
         else:
             treks=Trek.query.filter_by(status="Open").all()
 
         treks_json=[]
         for trek in treks:
-
             this_treks ={}
-
             this_treks["id"]=trek.id
             this_treks["name"]=trek.name
             this_treks["location"]=trek.location
@@ -63,19 +72,21 @@ class TrekApi(Resource):
             this_treks["description"]=trek.description
             this_treks["status"]=trek.status
             this_treks["assigned_guide_id"]=trek.assigned_guide_id
-
             treks_json.append(this_treks)
 
         if treks_json:
+            if is_regular_user:
+                cache.set('treks_data', treks_json, timeout=300)
             return treks_json, 200
         
         return {
             "message": "No treks found"
             }, 404
 
+
     @auth_required("token")
     @roles_accepted("admin")
-    def post(self):
+    def post(self): 
         args = trek_parser.parse_args()
 
         try:
@@ -280,6 +291,17 @@ class BookingApi(Resource):
                 "message": "already cancelled"
             }, 400
 
+        if args.get('booking_status') == 'Cancelled':
+            if booking.booking_status == 'Booked':
+                trek.slots += 1
+            booking.booking_status = 'Cancelled'
+            booking.payment_status = 'Cancelled'
+            db.session.commit()
+            cache.delete('treks_data')
+            return {
+                "message": "Booking cancelled successfully"
+            }, 200
+
         if "admin" in user_roles:
             if args['payment_status'] == 'Paid' and booking.payment_status != 'Paid':
                 if trek.slots > 0:
@@ -309,7 +331,8 @@ class BookingApi(Resource):
         return {
             "message": "unable to update the booking"
         }, 400
-          
+
+
     
     
 api.add_resource(

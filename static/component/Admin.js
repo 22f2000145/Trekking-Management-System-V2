@@ -230,9 +230,13 @@ export default {
                 <td>{{ b.payment_status }}</td>
                 <td>{{ b.booking_status }}</td>
                 <td>
-                  <button v-if="b.payment_status === 'Pending Verification'" class="btn btn-success btn-sm" @click="approvePayment(b.id)">Approve Payment</button>
-                  <span v-else-if="b.payment_status === 'Paid'" class="badge bg-success">Approved</span>
-                  <span v-else class="text-muted">-</span>
+                  <div class="d-flex align-items-center gap-2">
+                    <button v-if="b.payment_status === 'Pending Verification'" class="btn btn-success btn-sm" @click="approvePayment(b.id)">Approve Payment</button>
+                    <span v-else-if="b.payment_status === 'Paid'" class="badge bg-success">Approved</span>
+                    <span v-else-if="b.booking_status === 'Cancelled'" class="badge bg-danger">Cancelled</span>
+                    <span v-else class="text-muted">-</span>
+                    <button v-if="b.booking_status !== 'Cancelled'" class="btn btn-danger btn-sm" @click="cancelBooking(b.id)">Cancel</button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -370,6 +374,7 @@ export default {
           this.message = { text: data.message, type: "success" }
           this.loadStats()
           this.loadPendingStaff()
+          this.loadUsers()
         })
     },
     rejectStaff(id) {
@@ -385,6 +390,7 @@ export default {
           this.message = { text: data.message, type: "success" }
           this.loadStats()
           this.loadPendingStaff()
+          this.loadUsers()
         })
     },
     loadTreks() {
@@ -559,6 +565,24 @@ export default {
         },
         body: JSON.stringify({
           payment_status: "Paid"
+        })
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.message = { text: data.message, type: "success" }
+          this.loadBookings()
+          this.loadStats()
+        })
+    },
+    cancelBooking(bookingId) {
+      fetch('/api/bookings/update/' + bookingId, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        },
+        body: JSON.stringify({
+          booking_status: "Cancelled"
         })
       })
         .then(response => response.json())

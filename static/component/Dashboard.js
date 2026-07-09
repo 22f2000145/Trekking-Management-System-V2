@@ -171,9 +171,17 @@ export default {
                   <td>{{ b.booking_status }}</td>
                   <td>{{ b.payment_status }}</td>
                   <td>
-                    <button v-if="b.payment_status === 'Pending'" class="btn btn-success btn-sm" @click="payBooking(b.id)">Pay Now</button>
-                    <span v-else-if="b.payment_status === 'Pending Verification'" class="badge bg-warning text-dark">Pending Verification</span>
-                    <span v-else class="badge bg-success">Confirmed</span>
+                    <div class="d-flex align-items-center gap-2">
+                      <template v-if="b.booking_status === 'Cancelled'">
+                        <span class="badge bg-danger">Cancelled</span>
+                      </template>
+                      <template v-else>
+                        <button v-if="b.payment_status === 'Pending'" class="btn btn-success btn-sm" @click="payBooking(b.id)">Pay Now</button>
+                        <span v-else-if="b.payment_status === 'Pending Verification'" class="badge bg-warning text-dark">Pending Verification</span>
+                        <span v-else class="badge bg-success">Confirmed</span>
+                        <button class="btn btn-outline-danger btn-sm" @click="cancelBooking(b.id)">Cancel</button>
+                      </template>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -330,6 +338,24 @@ export default {
         body: JSON.stringify({
           payment_status: "Paid",
           booking_status: "Booked"
+        })
+      })
+        .then(response => response.json())
+        .then(data => {
+          this.message = data.message
+          this.loadBookings()
+          this.loadTreks()
+        })
+    },
+    cancelBooking(bookingId) {
+      fetch('/api/bookings/update/' + bookingId, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authentication-Token": localStorage.getItem("auth-token")
+        },
+        body: JSON.stringify({
+          booking_status: "Cancelled"
         })
       })
         .then(response => response.json())

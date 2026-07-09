@@ -21,6 +21,7 @@ def create_app():
 from application.celery_init import celery_init_app
 
 app = create_app()
+
 celery = celery_init_app(app)
 
 with app.app_context():
@@ -45,3 +46,4 @@ from application.routes import *
 
 if __name__ == '__main__':
     app.run(debug=True)
+
