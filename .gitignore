@@ -126,3 +126,12 @@ venv.bak/
 
 # Exported CSV reports
 static/bookings_report.csv
+static/bookings_report_*.csv
+
+# Celery Beat schedules
+celerybeat-schedule
+celerybeat-schedule-shm
+celerybeat-schedule-wal
+
+# Redis state files
+dump.rdb

@@ -12,8 +12,9 @@ export default {
 
       <div v-if="role.includes('staff')">
         <div class="card mb-4">
-          <div class="card-header">
-            <h4>My Assigned Treks</h4>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">My Assigned Treks</h4>
+            <button class="btn btn-success btn-sm" @click="exportCSV">Export Bookings (CSV)</button>
           </div>
           <div class="card-body">
             <table class="table table-bordered">
@@ -146,8 +147,9 @@ export default {
         </div>
 
         <div class="card">
-          <div class="card-header">
-            <h4>My Bookings</h4>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">My Bookings</h4>
+            <button class="btn btn-success btn-sm" @click="exportCSV">Export Booking History (CSV)</button>
           </div>
           <div class="card-body">
             <table class="table table-bordered">
@@ -364,6 +366,9 @@ export default {
           this.loadBookings()
           this.loadTreks()
         })
+    },
+    exportCSV() {
+      window.open('/api/export?auth_token=' + localStorage.getItem("auth-token"))
     }
   }
 }

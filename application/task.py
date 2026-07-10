@@ -8,9 +8,15 @@ import requests
 
 
 @shared_task(ignore_result=False)
-def export_bookings_csv():
-    bookings = Booking.query.all()
+def export_bookings_csv(user_id=None, guide_id=None):
     filename = "bookings_report.csv"
+    if user_id:
+        bookings = Booking.query.filter_by(user_id=user_id).all()
+    elif guide_id:
+        bookings = Booking.query.join(Trek).filter(Trek.assigned_guide_id == guide_id).all()
+    else:
+        bookings = Booking.query.all()
+
     filepath = "static/" + filename
 
     with open(filepath, "w", newline="") as f:

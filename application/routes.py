@@ -307,11 +307,20 @@ def toggle_user_status(user_id):
 
 @app.route('/api/export')
 @auth_required("token")
-@roles_required("admin")
+@roles_accepted("admin", "user", "staff")
 def export_csv():
-    result = export_bookings_csv.delay()
-    result.get()  # wait for task to finish
-    return send_file("static/" + result.result, as_attachment=True)
+    user_roles = roles_list(current_user.roles)
+    if "admin" in user_roles:
+        result = export_bookings_csv.delay(user_id=None, guide_id=None)
+    elif "staff" in user_roles:
+        result = export_bookings_csv.delay(user_id=None, guide_id=current_user.id)
+    else:
+        result = export_bookings_csv.delay(user_id=current_user.id, guide_id=None)
+    
+    filename = result.get()  # wait for task to finish
+    return send_file("static/" + filename, as_attachment=True)
+
+
 @app.route('/api/user/profile', methods=['GET', 'PUT'])
 @auth_required("token")
 def user_profile():

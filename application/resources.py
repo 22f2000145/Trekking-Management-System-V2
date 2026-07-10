@@ -6,6 +6,7 @@ from flask_security import auth_required, roles_accepted, current_user
 from datetime import datetime
 from application.utils import roles_list
 from flask_caching import Cache
+from application.task import update_message
 
 api = Api()
 
@@ -168,7 +169,10 @@ class TrekApi(Resource):
         trek = Trek.query.get(trek_id)
 
         if trek:
-            
+            for booking in trek.bookings:
+                if booking.trekker:
+                    update_message.delay(booking.trekker.username)
+
             Booking.query.filter_by(trek_id=trek.id).delete()
 
             db.session.delete(trek)
@@ -303,6 +307,7 @@ class BookingApi(Resource):
             booking.payment_status = 'Cancelled'
             db.session.commit()
             cache.delete('treks_data')
+            update_message.delay(booking.trekker.username)
             return {
                 "message": "Booking cancelled successfully"
             }, 200
@@ -315,7 +320,6 @@ class BookingApi(Resource):
                     booking.booking_status = "Booked"
                     db.session.commit()
                     cache.delete('treks_data')
-                    from application.task import update_message
                     update_message.delay(booking.trekker.username)
                     return {
                         "message": "Booking confirmed"

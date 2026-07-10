@@ -4,6 +4,7 @@ from application.models import User, Role
 from application.resources import api, cache
 from application.config import LocalDevelopmentConfig
 from flask_security import Security, SQLAlchemyUserDatastore, hash_password
+from application.celery_init import celery_init_app
 
 
 def create_app():
@@ -18,7 +19,6 @@ def create_app():
     return app
 
 
-from application.celery_init import celery_init_app
 
 app = create_app()
 
