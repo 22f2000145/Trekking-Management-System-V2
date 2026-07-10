@@ -205,6 +205,29 @@ export default {
           <button class="btn btn-success btn-sm" @click="exportCSV">Export CSV</button>
         </div>
         <div class="card-body">
+          <!-- Filter and Search Controls -->
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <input type="text" class="form-control" placeholder="Search by Booking ID, Trek, Trekker, Guide, or Date..." v-model="bookingSearch">
+            </div>
+            <div class="col-md-3">
+              <select class="form-select" v-model="bookingStatusFilter">
+                <option value="">All Booking Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Booked">Booked</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <select class="form-select" v-model="paymentStatusFilter">
+                <option value="">All Payment Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Pending Verification">Pending Verification</option>
+                <option value="Paid">Paid</option>
+              </select>
+            </div>
+          </div>
+
           <table class="table table-bordered">
             <thead>
               <tr>
@@ -220,7 +243,7 @@ export default {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="b in bookings" :key="b.id">
+              <tr v-for="b in getFilteredBookings()" :key="b.id">
                 <td>#{{ b.id }}</td>
                 <td>{{ b.trek_name }}</td>
                 <td>{{ b.username }}</td>
@@ -295,6 +318,9 @@ export default {
       users: [],
       bookings: [],
       userSearch: "",
+      bookingSearch: "",
+      bookingStatusFilter: "",
+      paymentStatusFilter: "",
       editMode: false,
       trekForm: {
         id: "",
@@ -333,6 +359,38 @@ export default {
           result.push(u)
         }
       }
+      return result
+    },
+
+    getFilteredBookings() {
+      var result = []
+      var search = this.bookingSearch.trim().toLowerCase()
+
+      for (var i = 0; i < this.bookings.length; i++) {
+        var b = this.bookings[i]
+
+        if (this.bookingStatusFilter && b.booking_status !== this.bookingStatusFilter) {
+          continue
+        }
+
+        if (this.paymentStatusFilter && b.payment_status !== this.paymentStatusFilter) {
+          continue
+        }
+
+        if (search) {
+          var found = false
+          if (String(b.id).includes(search)) found = true
+          if (b.trek_name && b.trek_name.toLowerCase().includes(search)) found = true
+          if (b.username && b.username.toLowerCase().includes(search)) found = true
+          if (b.guide_name && b.guide_name.toLowerCase().includes(search)) found = true
+          if (b.booking_date && b.booking_date.toLowerCase().includes(search)) found = true
+          if (!found) continue
+        }
+
+
+        result.push(b)
+      }
+
       return result
     },
     loadStats() {

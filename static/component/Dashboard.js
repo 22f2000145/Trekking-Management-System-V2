@@ -71,12 +71,35 @@ export default {
           </div>
         </div>
 
-        <div v-if="viewParticipants" class="card">
+        <div v-if="viewParticipants" class="card mb-4">
           <div class="card-header d-flex justify-content-between align-items-center">
             <h4>Trekkers List (Trek ID: {{ selectedTrekId }})</h4>
             <button class="btn-close" @click="viewParticipants = false"></button>
           </div>
           <div class="card-body">
+            <!-- Specific Trek Participant Filters -->
+            <div class="row g-2 mb-3">
+              <div class="col-md-6">
+                <input type="text" class="form-control" placeholder="Search trekkers by username, ID, or date..." v-model="participantSearch">
+              </div>
+              <div class="col-md-3">
+                <select class="form-select" v-model="participantStatusFilter">
+                  <option value="">All Booking Statuses</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Booked">Booked</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <select class="form-select" v-model="participantPaymentFilter">
+                  <option value="">All Payment Statuses</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Pending Verification">Pending Verification</option>
+                  <option value="Paid">Paid</option>
+                </select>
+              </div>
+            </div>
+
             <table class="table table-bordered">
               <thead>
                 <tr>
@@ -92,6 +115,61 @@ export default {
                   <td>#{{ b.id }}</td>
                   <td>{{ b.username }}</td>
                   <td>{{ b.booking_date }}</td>
+                  <td>{{ b.payment_status }}</td>
+                  <td>{{ b.booking_status }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">My Bookings History</h4>
+          </div>
+          <div class="card-body">
+            <!-- All Guide Bookings Search/Filters -->
+            <div class="row g-2 mb-3">
+              <div class="col-md-6">
+                <input type="text" class="form-control" placeholder="Search by Booking ID, Trek, Trekker, or Date..." v-model="bookingSearch">
+              </div>
+              <div class="col-md-3">
+                <select class="form-select" v-model="bookingStatusFilter">
+                  <option value="">All Booking Statuses</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Booked">Booked</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <select class="form-select" v-model="paymentStatusFilter">
+                  <option value="">All Payment Statuses</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Pending Verification">Pending Verification</option>
+                  <option value="Paid">Paid</option>
+                </select>
+              </div>
+            </div>
+
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Booking ID</th>
+                  <th>Trek Name</th>
+                  <th>Trekker</th>
+                  <th>Booking Date</th>
+                  <th>Amount</th>
+                  <th>Payment Status</th>
+                  <th>Booking Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="b in getFilteredAllBookings()" :key="b.id">
+                  <td>#{{ b.id }}</td>
+                  <td>{{ b.trek_name }}</td>
+                  <td>{{ b.username }}</td>
+                  <td>{{ b.booking_date }}</td>
+                  <td>₹{{ b.total_amount }}</td>
                   <td>{{ b.payment_status }}</td>
                   <td>{{ b.booking_status }}</td>
                 </tr>
@@ -211,7 +289,13 @@ export default {
         status: "Open"
       },
       viewParticipants: false,
-      selectedTrekId: ""
+      selectedTrekId: "",
+      bookingSearch: "",
+      bookingStatusFilter: "",
+      paymentStatusFilter: "",
+      participantSearch: "",
+      participantStatusFilter: "",
+      participantPaymentFilter: ""
     }
   },
 
@@ -236,11 +320,71 @@ export default {
     getFilteredBookings() {
       if (!this.selectedTrekId) return []
       var result = []
+      var search = this.participantSearch.trim().toLowerCase()
+
       for (var i = 0; i < this.bookings.length; i++) {
-        if (this.bookings[i].trek_id === this.selectedTrekId) {
-          result.push(this.bookings[i])
+        var b = this.bookings[i]
+        if (b.trek_id !== this.selectedTrekId) {
+          continue
+        }
+        if (this.participantStatusFilter && b.booking_status !== this.participantStatusFilter) {
+          continue
+        }
+        if (this.participantPaymentFilter && b.payment_status !== this.participantPaymentFilter) {
+          continue
+        }
+
+        if (search) {
+          var found = false
+          if (String(b.id).includes(search)) found = true
+          if (b.username && b.username.toLowerCase().includes(search)) found = true
+          if (b.booking_date && b.booking_date.toLowerCase().includes(search)) found = true
+          if (!found) continue
+        }
+        result.push(b)
+      }
+      return result
+    },
+    getFilteredAllBookings() {
+      var result = []
+      var search = this.bookingSearch.trim().toLowerCase()
+
+      for (var i = 0; i < this.bookings.length; i++) {
+        var b = this.bookings[i]
+        var matchesSearch = true
+        if (search) {
+          var idStr = b.id ? b.id.toString() : ""
+          var trekName = b.trek_name ? b.trek_name.toLowerCase() : ""
+          var trekkerName = b.username ? b.username.toLowerCase() : ""
+          var bookingDate = b.booking_date ? b.booking_date.toLowerCase() : ""
+
+          if (!idStr.includes(search) &&
+            !trekName.includes(search) &&
+            !trekkerName.includes(search) &&
+            !bookingDate.includes(search)) {
+            matchesSearch = false
+          }
+        }
+
+        var matchesBookingStatus = true
+        if (this.bookingStatusFilter) {
+          if (b.booking_status !== this.bookingStatusFilter) {
+            matchesBookingStatus = false
+          }
+        }
+
+        var matchesPaymentStatus = true
+        if (this.paymentStatusFilter) {
+          if (b.payment_status !== this.paymentStatusFilter) {
+            matchesPaymentStatus = false
+          }
+        }
+
+        if (matchesSearch && matchesBookingStatus && matchesPaymentStatus) {
+          result.push(b)
         }
       }
+
       return result
     },
     loadTreks() {
