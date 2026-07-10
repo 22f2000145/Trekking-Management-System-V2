@@ -227,20 +227,25 @@ class BookingApi(Resource):
                 "message": "trek not found"
             },404
 
-        if trek.slots <=0:
-            return{
-                "message": "No slots available"
-            },400
+        if trek.status != 'Open':
+            return {
+                "message": "Booking is only allowed for Open treks"
+            }, 400
 
-        existing_booking = Booking.query.filter_by(
-            user_id=current_user.id,
-            trek_id=args['trek_id'],
-            booking_status="Booked"
+        if trek.slots <= 0:
+            return {
+                "message": "No slots available"
+            }, 400
+
+        existing_booking = Booking.query.filter(
+            Booking.user_id == current_user.id,
+            Booking.trek_id == args['trek_id'],
+            Booking.booking_status != 'Cancelled'
         ).first()
 
         if existing_booking:
             return {
-                "message": "already booked"
+                "message": "You already have a booking for this trek"
             }, 400
 
         try:
