@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Monthly Report - All Users Summary</title>
+</head>
+
+<body>
+    <div>
+        <h1>Monthly Bookings Summary - Admin Report</h1>
+        <p>Hello Admin,</p>
+        <p>Below is the consolidated monthly booking report for all users.</p>
+
+        {% for user_data in all_users %}
+        <h3>{{ user_data['username'] }} ({{ user_data['email'] }})</h3>
+        {% if user_data['bookings'] | length > 0 %}
+        <table border="1" cellpadding="8" cellspacing="0"
+            style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
+            <thead>
+                <tr style="background-color: #f2f2f2;">
+                    <th>Sr No</th>
+                    <th>Booking ID</th>
+                    <th>Trek Name</th>
+                    <th>Booking Date</th>
+                    <th>Payment Status</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in user_data['bookings'] %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>#{{ b['id'] }}</td>
+                    <td>{{ b['trek_name'] }}</td>
+                    <td>{{ b['booking_date'] }}</td>
+                    <td>{{ b['payment_status'] }}</td>
+                    <td>Rs. {{ b['total_amount'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color: #888888; margin-bottom: 20px;">No bookings this month.</p>
+        {% endif %}
+        <hr>
+        {% endfor %}
+
+        <p style="margin-top: 20px;">
+            Thank you for using Trekking Management System.
+        </p>
+        <hr>
+        <p style="text-align: center; color: #888888; font-size: 12px;">
+            Trekking Management System | &copy; Copyright 2026 | Created at IITM
+        </p>
+    </div>
+</body>
+
+</html>

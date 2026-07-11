@@ -29,17 +29,19 @@ def export_bookings_csv(user_id=None, guide_id=None):
             trekker_name = trekker.username if trekker else "Unknown"
             guide_name = trek.guide.username if trek and trek.guide else "Not Assigned"
             writer.writerow([booking.id, trek_name, trekker_name, guide_name, booking.booking_date, booking.total_amount, booking.payment_status, booking.booking_status])
-
+ 
     return filename
 
 @shared_task(ignore_result=False, name="monthly_report")
 def monthly_report():
-    users = User.query.all()        
+    users = User.query.all()
+    all_users_data = []  
+
     for user in users:
         user_roles = [r.name for r in user.roles]
         if "user" not in user_roles:
             continue
-
+            
         user_data = {}
         user_data["username"] = user.username
         user_data["email"] = user.email
@@ -54,10 +56,23 @@ def monthly_report():
             user_bookings.append(this_booking)
         
         user_data["bookings"] = user_bookings
+        all_users_data.append(user_data)
+
         with open("templates/mail_details.html", "r") as f:
             template_content = f.read()
             message = format_report(template_content, {"data": user_data})
-            send_email(user.email, "Monthly Report", message)                
+            send_email(user.email, "Monthly Report", message)
+
+    with open("templates/admin_monthly_report.html", "r") as f:
+        admin_template = f.read()
+
+    admin_message = format_report(admin_template, {"all_users": all_users_data})
+
+    for user in users:
+        admin_roles = [r.name for r in user.roles]
+        if "admin" in admin_roles:
+            send_email(user.email, "Monthly Report - Admin Summary", admin_message)
+
     return "Monthly Report Sent"
 
 

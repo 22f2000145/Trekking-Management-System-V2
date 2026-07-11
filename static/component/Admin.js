@@ -360,22 +360,17 @@ export default {
       }
       return result
     },
-
     getFilteredBookings() {
       var result = []
       var search = this.bookingSearch.trim().toLowerCase()
-
       for (var i = 0; i < this.bookings.length; i++) {
         var b = this.bookings[i]
-
         if (this.bookingStatusFilter && b.booking_status !== this.bookingStatusFilter) {
           continue
         }
-
         if (this.paymentStatusFilter && b.payment_status !== this.paymentStatusFilter) {
           continue
         }
-
         if (search) {
           var found = false
           if (String(b.id).includes(search)) found = true
@@ -385,8 +380,6 @@ export default {
           if (b.booking_date && b.booking_date.toLowerCase().includes(search)) found = true
           if (!found) continue
         }
-
-
         result.push(b)
       }
 
