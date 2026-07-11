@@ -51,23 +51,23 @@ export default {
                     "Authentication-Token": localStorage.getItem("auth-token")
                 }
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.username) {
-                    this.profileData.username = data.username;
-                    this.profileData.email = data.email;
-                } else {
-                    this.error = data.message || "Failed to load profile details.";
-                }
-            })
-            .catch(err => {
-                this.error = "An error occurred while fetching details.";
-            });
+                .then(res => res.json())
+                .then(data => {
+                    if (data.username) {
+                        this.profileData.username = data.username;
+                        this.profileData.email = data.email;
+                    } else {
+                        this.error = data.message || "Failed to load profile details.";
+                    }
+                })
+                .catch(err => {
+                    this.error = "An error occurred while fetching details.";
+                });
         },
         saveProfile() {
             this.message = "";
             this.error = "";
-            
+
             fetch('/api/user/profile', {
                 method: "PUT",
                 headers: {
@@ -76,22 +76,22 @@ export default {
                 },
                 body: JSON.stringify(this.profileData)
             })
-            .then(res => res.json())
-            .then(data => {
-                if (data.message === "Profile updated successfully") {
-                    this.message = data.message;
-                    localStorage.setItem("username", this.profileData.username);
-                    this.profileData.password = "";
-                    setTimeout(() => {
-                        this.goBack();
-                    }, 1500);
-                } else {
-                    this.error = data.message || "Failed to update profile.";
-                }
-            })
-            .catch(err => {
-                this.error = "An error occurred during update.";
-            });
+                .then(res => res.json())
+                .then(data => {
+                    if (data.message === "Profile updated successfully") {
+                        this.message = data.message;
+                        localStorage.setItem("username", this.profileData.username);
+                        this.profileData.password = "";
+                        setTimeout(() => {
+                            this.goBack();
+                        }, 1500);
+                    } else {
+                        this.error = data.message || "Failed to update profile.";
+                    }
+                })
+                .catch(err => {
+                    this.error = "An error occurred during update.";
+                });
         },
         goBack() {
             const role = localStorage.getItem("role") || "";

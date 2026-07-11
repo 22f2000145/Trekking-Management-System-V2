@@ -12,7 +12,7 @@ export default {
                 <router-link to="/register" class="btn btn-outline-success px-3 btn-sm">Register</router-link>
             </template>
             <template v-else>
-                <router-link to="/update" class="btn btn-outline-primary px-3 btn-sm me-2">Profile</router-link>
+                <router-link v-if="role && !role.includes('staff')" to="/update" class="btn btn-outline-primary px-3 btn-sm me-2">Profile</router-link>
                 <button class="btn btn-outline-danger px-3 btn-sm" @click="logout">Logout</button>
             </template>
         </div>

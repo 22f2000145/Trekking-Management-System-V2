@@ -81,17 +81,14 @@ def create_user():
     username = body.get("username")
     email = body.get("email")
     password = body.get("password")
-    roles = body.get("roles")
     
     if not username or not email or not password:
         return jsonify({
             "message": "Fields missing"
         }), 400
-        
 
-    if not roles:
-        roles = ["user"]
-        
+   
+    roles = ["user"]
 
     user = app.security.datastore.find_user(email=email)
     if user:
@@ -99,95 +96,19 @@ def create_user():
             "message": "User already exists"
         }), 400
 
-
-    active_status = True
-    if "staff" in roles:
-        active_status = False
-
-
     app.security.datastore.create_user(
         username=username, 
         email=email, 
         password=hash_password(password), 
-        active=active_status, 
+        active=True, 
         roles=roles
     )
     db.session.commit()
 
-
-    if not active_status:
-        return jsonify({
-            "message": "Please wait for admin approval."
-        }), 201
     return jsonify({
         "message": "User created successfully"
     }), 200
 
-
-@app.route('/api/admin/pending-staff', methods=['GET'])
-@auth_required("token")
-@roles_required("admin")
-def get_pending_staff():
-    inactive_users = User.query.filter_by(active=False).all()
-    pending_staff = []
-    for user in inactive_users:
-        user_role_names = roles_list(user.roles)
-        if "staff" in user_role_names:
-            pending_staff.append({
-                "id": user.id,
-                "username": user.username,
-                "email": user.email
-            })
-            
-    return jsonify(pending_staff), 200
-
-
-@app.route('/api/admin/approve-staff/<int:user_id>', methods=['POST'])
-@auth_required("token")
-@roles_required("admin")
-def approve_staff(user_id):
-    staff_user = User.query.filter_by(id=user_id).first()
-    if not staff_user:
-        return jsonify({
-            "message": "Staff user not found"
-            }), 404
-        
-    user_role_names = roles_list(staff_user.roles)
-    if 'staff' not in user_role_names:
-        return jsonify({
-            "message": "User is not a staff member"
-            }), 400
-        
-    staff_user.active = True
-    db.session.commit()
-    
-    return jsonify({
-        "message": f"Staff user '{staff_user.username}' has been approved and is now active."
-        }), 200
-
-
-@app.route('/api/admin/reject-staff/<int:user_id>', methods=['POST'])
-@auth_required("token")
-@roles_required("admin")
-def reject_staff(user_id):
-    staff_user = User.query.filter_by(id=user_id).first()
-    if not staff_user:
-        return jsonify({
-            "message": "Staff user not found"
-            }), 404
-        
-    user_role_names = roles_list(staff_user.roles)
-    if 'staff' not in user_role_names:
-        return jsonify({
-            "message": "User is not a staff member"
-            }), 400
-        
-    db.session.delete(staff_user)
-    db.session.commit()
-    
-    return jsonify({
-        "message": f"Staff user '{staff_user.username}' registration request has been rejected."
-        }), 200
 
 
 @app.route('/api/admin/stats', methods=['GET'])

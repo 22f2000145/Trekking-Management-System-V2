@@ -18,13 +18,6 @@ export default {
                 <label for="password" class="form-label">Password</label>
                 <input type="password" class="form-control" id="password" placeholder="Enter Your Password" v-model="formData.password">
             </div>
-            <div class="mb-3">
-                <label for="role" class="form-label">Register As</label>
-                <select class="form-select" id="role" v-model="selectedRole">
-                    <option value="user">Trekker (User)</option>
-                    <option value="staff">Trek Staff (Guide)</option>
-                </select>
-            </div>
             <div class="mb-3 form-check">
                 <input type="checkbox" class="form-check-input" id="exampleCheck1">
                 <label class="form-check-label" for="exampleCheck1">Check me out</label>
@@ -37,7 +30,6 @@ export default {
 data() {
     return {
         message: '',
-        selectedRole: 'user',
         formData: {
             username: '',
             email: '',
@@ -51,7 +43,7 @@ methods: {
             username: this.formData.username,
             email: this.formData.email,
             password: this.formData.password,
-            roles: [this.selectedRole]
+            roles: ["user"]
         }
         fetch('/api/register', {
             method: 'POST',

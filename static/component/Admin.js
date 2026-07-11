@@ -17,9 +17,7 @@ export default {
         <button class="btn btn-sm btn-outline-primary" :class="{'active': currentTab === 'create'}" @click="currentTab = 'create'">{{ editMode ? 'Edit Trek' : 'Create Trek' }}</button>
         <button class="btn btn-sm btn-outline-primary" :class="{'active': currentTab === 'bookings'}" @click="currentTab = 'bookings'">Bookings History</button>
         <button class="btn btn-sm btn-outline-primary" :class="{'active': currentTab === 'users'}" @click="currentTab = 'users'">Users & Staff</button>
-        <button class="btn btn-sm btn-outline-primary" :class="{'active': currentTab === 'pending'}" @click="currentTab = 'pending'">
-          Pending Approvals <span class="badge bg-danger" v-if="pending_staff.length > 0">{{ pending_staff.length }}</span>
-        </button>
+        <button class="btn btn-sm btn-outline-primary" :class="{'active': currentTab === 'createstaff'}" @click="currentTab = 'createstaff'">Create Staff</button>
       </div>
 
       <div v-if="currentTab === 'stats'" class="card mb-4">
@@ -64,30 +62,28 @@ export default {
         </div>
       </div>
 
-      <div v-if="currentTab === 'pending'" class="card">
+      <div v-if="currentTab === 'createstaff'" class="card">
         <div class="card-header">
-          <h4>Pending Staff Registrations</h4>
+          <h4>Create Staff</h4>
         </div>
         <div class="card-body">
-          <table class="table table-bordered">
-            <thead>
-              <tr>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="staff in pending_staff" :key="staff.id">
-                <td>{{ staff.username }}</td>
-                <td>{{ staff.email }}</td>
-                <td>
-                  <button class="btn btn-success" @click="approveStaff(staff.id)">Approve</button>
-                  <button class="btn btn-danger" @click="rejectStaff(staff.id)">Reject</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label>Username</label>
+              <input class="form-control" v-model="staffForm.username" placeholder="Enter staff username">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label>Email</label>
+              <input type="email" class="form-control" v-model="staffForm.email" placeholder="Enter staff email">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label>Password</label>
+              <input type="password" class="form-control" v-model="staffForm.password" placeholder="Enter staff password">
+            </div>
+            <div class="col-md-12">
+              <button class="btn btn-primary" @click="createStaff">Create Staff</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -312,7 +308,6 @@ export default {
         total_users: 0,
         total_staff: 0,
       },
-      pending_staff: [],
       treks: [],
       guides: [],
       users: [],
@@ -335,13 +330,17 @@ export default {
         end_date: "",
         status: "Open",
         assigned_guide_id: ""
+      },
+      staffForm: {
+        username: "",
+        email: "",
+        password: ""
       }
     }
   },
 
   mounted() {
     this.loadStats()
-    this.loadPendingStaff()
     this.loadTreks()
     this.loadGuides()
     this.loadUsers()
@@ -406,49 +405,32 @@ export default {
           this.stats = data
         })
     },
-    loadPendingStaff() {
-      fetch('/api/admin/pending-staff', {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authentication-Token": localStorage.getItem("auth-token")
-        }
-      })
-        .then(response => response.json())
-        .then(data => {
-          this.pending_staff = data
-        })
-    },
-    approveStaff(id) {
-      fetch('/api/admin/approve-staff/' + id, {
+    createStaff() {
+      if (!this.staffForm.username || !this.staffForm.email || !this.staffForm.password) {
+        this.message = { text: "Please fill all fields", type: "danger" }
+        return
+      }
+      fetch('/api/admin/create-staff', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authentication-Token": localStorage.getItem("auth-token")
-        }
+        },
+        body: JSON.stringify(this.staffForm)
       })
         .then(response => response.json())
         .then(data => {
-          this.message = { text: data.message, type: "success" }
-          this.loadStats()
-          this.loadPendingStaff()
-          this.loadUsers()
-        })
-    },
-    rejectStaff(id) {
-      fetch('/api/admin/reject-staff/' + id, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authentication-Token": localStorage.getItem("auth-token")
-        }
-      })
-        .then(response => response.json())
-        .then(data => {
-          this.message = { text: data.message, type: "success" }
-          this.loadStats()
-          this.loadPendingStaff()
-          this.loadUsers()
+          if (data.message.includes("successfully")) {
+            this.message = { text: data.message, type: "success" }
+            this.staffForm.username = ""
+            this.staffForm.email = ""
+            this.staffForm.password = ""
+            this.loadStats()
+            this.loadGuides()
+            this.loadUsers()
+          } else {
+            this.message = { text: data.message, type: "danger" }
+          }
         })
     },
     loadTreks() {
