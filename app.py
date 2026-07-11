@@ -6,7 +6,6 @@ from application.config import LocalDevelopmentConfig
 from flask_security import Security, SQLAlchemyUserDatastore, hash_password
 from application.celery_init import celery_init_app
 
-
 def create_app():
     app = Flask(__name__)
     app.config.from_object(LocalDevelopmentConfig)
@@ -17,8 +16,6 @@ def create_app():
     app.security = Security(app, datastore)
     app.app_context().push()
     return app
-
-
 
 app = create_app()
 
@@ -40,10 +37,7 @@ with app.app_context():
         )
     db.session.commit()
 
-
 from application.routes import *
-
 
 if __name__ == '__main__':
     app.run(debug=True)
-

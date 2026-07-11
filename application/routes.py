@@ -36,8 +36,6 @@ def user_home():
         "email": user.email,
         "roles": roles_list(user.roles)
     }),200
-
-
 #login
 
 @app.route('/api/login', methods=["POST"])
@@ -71,8 +69,6 @@ def user_login():
         "token": user.get_auth_token(),
         "roles": roles_list(user.roles)
     }),200
-
-
 #register
 
 @app.route('/api/register', methods=["POST"])
@@ -87,7 +83,6 @@ def create_user():
             "message": "Fields missing"
         }), 400
 
-   
     roles = ["user"]
 
     user = app.security.datastore.find_user(email=email)
@@ -110,14 +105,12 @@ def create_user():
     }), 200
 
 
-
 @app.route('/api/admin/stats', methods=['GET'])
 @auth_required("token")
 @roles_required("admin")
 def get_admin_stats():
     total_treks = Trek.query.count()
     total_bookings = Booking.query.count()
-    
     all_users = User.query.all()
     user_count = 0
     staff_count = 0
@@ -155,7 +148,6 @@ def get_active_guides():
                 "email": u.email
             })
     return jsonify(guides), 200
-
 
 @app.route('/api/admin/users', methods=['GET'])
 @auth_required("token")
@@ -279,17 +271,3 @@ def user_profile():
 
         db.session.commit()
         return jsonify({"message": "Profile updated successfully"}), 200
-
- 
-    
-
-
-
-
-
-
-
-
-
-
-

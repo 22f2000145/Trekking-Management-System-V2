@@ -1,4 +1,3 @@
-
 import Home from './component/Home.js'
 import Login from './component/Login.js'
 import Register from './component/Register.js?v=2'
@@ -7,8 +6,6 @@ import Footer from './component/footer.js'
 import Dashboard from './component/Dashboard.js'
 import Update from './component/Update.js'
 import Admin from './component/Admin.js'
-
-
 const routes = [
     { path: '/', component: Home },
     { path: '/login', component: Login },

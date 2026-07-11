@@ -3,7 +3,6 @@ from flask_security import UserMixin, RoleMixin
 
 
 # Single User Table (Admin, Guide, Trekker)
-
 class User(db.Model, UserMixin):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
@@ -18,7 +17,6 @@ class User(db.Model, UserMixin):
     roles = db.relationship("Role", secondary="user_roles", backref="bearer")
     bookings = db.relationship("Booking", backref="trekker", lazy=True)
     assigned_treks = db.relationship("Trek", backref="guide", foreign_keys="Trek.assigned_guide_id", lazy=True)
-
 
 
 # Single Roles table
@@ -37,8 +35,6 @@ class UserRoles(db.Model):
 
 
 # Treks
-
-
 class Trek(db.Model):
     __tablename__ = "treks"
     id = db.Column(db.Integer, primary_key=True)
@@ -54,12 +50,10 @@ class Trek(db.Model):
     status = db.Column(db.String(), default="Open")
 
     assigned_guide_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
-
-
     bookings = db.relationship("Booking", backref="trek", lazy=True)
 
-# Bookings
 
+# Bookings
 class Booking(db.Model):
     __tablename__ = "bookings"
     id = db.Column(db.Integer, primary_key=True)

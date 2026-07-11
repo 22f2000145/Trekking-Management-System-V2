@@ -32,8 +32,6 @@ def export_bookings_csv(user_id=None, guide_id=None):
 
     return filename
 
-
-
 @shared_task(ignore_result=False, name="monthly_report")
 def monthly_report():
     users = User.query.all()        
@@ -59,8 +57,7 @@ def monthly_report():
         with open("templates/mail_details.html", "r") as f:
             template_content = f.read()
             message = format_report(template_content, {"data": user_data})
-            send_email(user.email, "Monthly Report", message)
-                 
+            send_email(user.email, "Monthly Report", message)                
     return "Monthly Report Sent"
 
 
@@ -70,7 +67,3 @@ def update_message(username):
     response = requests.post("https://chat.googleapis.com/v1/spaces/AAQAv5fyRZU/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=Rk_uDehQBZYtCEKPg8lTqr0oATRlaxgQyXC4cqHO0p4", json = {"text": text})
     print(response.status_code)
     return "The booking update is sent to user"
-    
-            
-        
-    

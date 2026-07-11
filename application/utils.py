@@ -5,19 +5,16 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from flask import current_app as app
 
-
 def roles_list(roles):
     role_list = []
     for role in roles:
         role_list.append(role.name)
     return role_list
-    
 
 def format_report(html_template, data):
     template = Template(html_template)
     rendered_html = template.render(data)
     return rendered_html
-
 
 def send_email(to_address, subject, content_body):
     host = app.config.get("SMTP_SERVER_HOST", "localhost")
@@ -38,5 +35,3 @@ def send_email(to_address, subject, content_body):
         s.login(sender, password)
     s.send_message(msg)
     s.quit()
-
-

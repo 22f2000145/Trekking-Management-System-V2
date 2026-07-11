@@ -25,13 +25,11 @@ trek_parser.add_argument("description")
 trek_parser.add_argument("status")
 trek_parser.add_argument("assigned_guide_id")
 
-
 book = reqparse.RequestParser()
 book.add_argument("trek_id")
 book.add_argument("total_amount")
 book.add_argument("payment_status")
 book.add_argument("booking_status")
-
 
 #Treks
 
@@ -187,9 +185,7 @@ class TrekApi(Resource):
             "message": "trek not found"
         }, 404
 
-
-#Bookings
-   
+#Bookings 
 class BookingApi(Resource):
     @auth_required('token')
     @roles_accepted("user", "admin", "staff")
@@ -343,7 +339,6 @@ class BookingApi(Resource):
 
 
     
-    
 api.add_resource(
     TrekApi,
     '/api/treks',
@@ -357,6 +352,3 @@ api.add_resource(
     '/api/bookings',
     '/api/bookings/create',
     '/api/bookings/update/<int:booking_id>')
-          
-    
-    
