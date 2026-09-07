@@ -1,29 +1,59 @@
 export default {
     template: `
-    <div class="container mt-4">
-        <h2 class="text-center mb-4">Edit Profile</h2>
-        <div class="card p-4 shadow-sm mx-auto" style="max-width: 500px;">
-            <div v-if="message" class="alert alert-success">{{ message }}</div>
-            <div v-if="error" class="alert alert-danger">{{ error }}</div>
-            
-            <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
-                <input type="text" class="form-control" id="username" v-model="profileData.username">
+    <div class="tk-profile-page">
+        <div class="tk-profile-card">
+            <!-- Header -->
+            <div class="tk-auth-header">
+                <div class="tk-auth-icon">👤</div>
+                <h1 class="tk-auth-title">Edit Profile</h1>
+                <p class="tk-auth-subtitle">Update your trekker account details</p>
             </div>
-            
-            <div class="mb-3">
-                <label for="email" class="form-label">Email Address</label>
-                <input type="email" class="form-control" id="email" v-model="profileData.email">
-            </div>
-            
-            <div class="mb-3">
-                <label for="password" class="form-label">New Password (leave blank to keep current)</label>
-                <input type="password" class="form-control" id="password" v-model="profileData.password" placeholder="Enter new password">
-            </div>
-            
-            <div class="d-flex justify-content-between">
-                <button @click="goBack" class="btn btn-secondary">Back</button>
-                <button @click="saveProfile" class="btn btn-success">Save Profile</button>
+            <div class="tk-auth-body">
+                <div class="tk-auth-success" v-if="message">✅ {{ message }}</div>
+                <div class="tk-auth-error" v-if="error">⚠️ {{ error }}</div>
+
+                <div class="tk-form-group">
+                    <label class="tk-label" for="profile-username">👤 Username</label>
+                    <input
+                        type="text"
+                        id="profile-username"
+                        class="tk-input"
+                        v-model="profileData.username"
+                        placeholder="Your username"
+                    >
+                </div>
+
+                <div class="tk-form-group">
+                    <label class="tk-label" for="profile-email">📧 Email Address</label>
+                    <input
+                        type="email"
+                        id="profile-email"
+                        class="tk-input"
+                        v-model="profileData.email"
+                        placeholder="Your email"
+                    >
+                </div>
+
+                <div class="tk-form-group">
+                    <label class="tk-label" for="profile-password">🔒 New Password</label>
+                    <input
+                        type="password"
+                        id="profile-password"
+                        class="tk-input"
+                        v-model="profileData.password"
+                        placeholder="Leave blank to keep current password"
+                    >
+                </div>
+
+                <div style="display:flex;gap:12px;margin-top:0.5rem;">
+                    <button @click="goBack" class="tk-btn tk-btn-ghost-green" style="flex:1;justify-content:center;">
+                        ← Back
+                    </button>
+                    <button @click="saveProfile" class="tk-btn tk-btn-primary" :disabled="isLoading" style="flex:2;justify-content:center;">
+                        <span v-if="isLoading" class="tk-spinner" style="margin-right:8px;"></span>
+                        {{ isLoading ? 'Saving...' : '💾 Save Changes' }}
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -32,6 +62,7 @@ export default {
         return {
             message: "",
             error: "",
+            isLoading: false,
             profileData: {
                 username: "",
                 email: "",
@@ -67,6 +98,7 @@ export default {
         saveProfile() {
             this.message = "";
             this.error = "";
+            this.isLoading = true;
 
             fetch('/api/user/profile', {
                 method: "PUT",
@@ -84,13 +116,16 @@ export default {
                         this.profileData.password = "";
                         setTimeout(() => {
                             this.goBack();
-                        }, 1500);
+                        }, 1200);
                     } else {
                         this.error = data.message || "Failed to update profile.";
                     }
                 })
                 .catch(err => {
                     this.error = "An error occurred during update.";
+                })
+                .finally(() => {
+                    this.isLoading = false;
                 });
         },
         goBack() {

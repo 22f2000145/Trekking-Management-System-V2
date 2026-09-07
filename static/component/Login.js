@@ -1,22 +1,52 @@
 export default {
     template: `
-    <div class="row justify-content-center align-items-center" style="min-height: 750px;">
-        <div class="col-md-4 px-4">
-            <div class="card p-4 shadow-sm">
-                <p class="mx-2 mt-2 text-danger text-center" v-if="message">{{message}}</p>
-                <h3 class="text-center mb-4">Login</h3>
-                
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email Address</label>
-                    <input type="email" id="email" class="form-control" placeholder="name@example.com" v-model="formData.email">
+    <div class="tk-auth-page">
+        <div class="tk-auth-card">
+            <div class="tk-auth-header">
+                <div class="tk-auth-icon">🔑</div>
+                <h1 class="tk-auth-title">Welcome Back</h1>
+                <p class="tk-auth-subtitle">Sign in to continue your trekking journey</p>
+            </div>
+            <div class="tk-auth-body">
+                <div class="tk-auth-error" v-if="message">
+                    ⚠️ {{ message }}
                 </div>
-                
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" id="password" class="form-control" placeholder="Enter your password" v-model="formData.password">
+
+                <div class="tk-form-group">
+                    <label class="tk-label" for="login-email">📧 Email Address</label>
+                    <input
+                        type="email"
+                        id="login-email"
+                        class="tk-input"
+                        placeholder="name@example.com"
+                        v-model="formData.email"
+                        @keyup.enter="loginUser"
+                    >
                 </div>
-                
-                <button class="btn btn-primary w-100 mt-2" @click="loginUser">Login</button>
+
+                <div class="tk-form-group">
+                    <label class="tk-label" for="login-password">🔒 Password</label>
+                    <input
+                        type="password"
+                        id="login-password"
+                        class="tk-input"
+                        placeholder="Enter your password"
+                        v-model="formData.password"
+                        @keyup.enter="loginUser"
+                    >
+                </div>
+
+                <button class="tk-btn tk-btn-primary w-100 mt-2" @click="loginUser" :disabled="isLoading" style="width:100%;justify-content:center;">
+                    <span v-if="isLoading" class="tk-spinner" style="margin-right:8px;"></span>
+                    {{ isLoading ? 'Signing In...' : '🚀 Sign In' }}
+                </button>
+
+                <div style="text-align:center;margin-top:1.5rem;font-size:0.875rem;color:var(--text-muted);">
+                    New to TrekKaro? &nbsp;
+                    <router-link to="/register" style="color:var(--forest-light);font-weight:600;text-decoration:none;">
+                        Create an account →
+                    </router-link>
+                </div>
             </div>
         </div>
     </div>
@@ -24,6 +54,7 @@ export default {
     data() {
         return {
             message: "",
+            isLoading: false,
             formData: {
                 email: "",
                 password: ""
@@ -32,6 +63,13 @@ export default {
     },
     methods: {
         loginUser() {
+            if (!this.formData.email || !this.formData.password) {
+                this.message = "Please provide email and password"
+                return
+            }
+            this.isLoading = true
+            this.message = ""
+
             fetch('/api/login', {
                 method: 'POST',
                 headers: {
@@ -45,14 +83,24 @@ export default {
                         localStorage.setItem('auth-token', data.token)
                         localStorage.setItem("username", data.username)
                         localStorage.setItem("role", JSON.stringify(data.roles))
-                        if (data.roles && data.roles.includes("admin")) {
+
+                        const redirect = this.$route.query.redirect
+                        if (redirect && !redirect.includes('login') && !redirect.includes('register')) {
+                            this.$router.push(redirect)
+                        } else if (data.roles && data.roles.includes("admin")) {
                             this.$router.push('/admin')
                         } else {
                             this.$router.push('/dashboard')
                         }
                     } else {
-                        this.message = data.message
+                        this.message = data.message || "Invalid credentials"
                     }
+                })
+                .catch(() => {
+                    this.message = "Connection error. Please try again."
+                })
+                .finally(() => {
+                    this.isLoading = false
                 })
         }
     }

@@ -1,5 +1,8 @@
 from jinja2 import Template
-import pdfkit
+try:
+    import pdfkit
+except ImportError:
+    pdfkit = None
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText

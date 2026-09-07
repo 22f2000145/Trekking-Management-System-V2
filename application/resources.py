@@ -12,6 +12,19 @@ api = Api()
 
 cache = Cache()
 
+def safe_cache_delete(key):
+    try:
+        cache.delete(key)
+    except Exception:
+        pass
+
+def safe_update_message(username):
+    try:
+        if username:
+            update_message.delay(username)
+    except Exception:
+        pass
+
 trek_parser = reqparse.RequestParser()
 trek_parser.add_argument("name")
 trek_parser.add_argument("location")
@@ -44,9 +57,12 @@ class TrekApi(Resource):
                 is_regular_user = False
 
         if is_regular_user:
-            cached_data = cache.get('treks_data')
-            if cached_data is not None:
-                return cached_data, 200
+            try:
+                cached_data = cache.get('treks_data')
+                if cached_data is not None:
+                    return cached_data, 200
+            except Exception:
+                pass
 
         treks=[]
         if "admin" in user_roles:
@@ -75,7 +91,10 @@ class TrekApi(Resource):
 
         if treks_json:
             if is_regular_user:
-                cache.set('treks_data', treks_json, timeout=300)
+                try:
+                    cache.set('treks_data', treks_json, timeout=300)
+                except Exception:
+                    pass
             return treks_json, 200
         
         return {
@@ -104,7 +123,7 @@ class TrekApi(Resource):
 
             db.session.add(trek)
             db.session.commit()
-            cache.delete('treks_data')
+            safe_cache_delete('treks_data')
 
             return {
                 "message": "Trek created successfully"
@@ -153,7 +172,7 @@ class TrekApi(Resource):
             trek.status = args['status']
 
         db.session.commit()
-        cache.delete('treks_data')
+        safe_cache_delete('treks_data')
 
         return {
             "message": "Trek updated successfully"
@@ -169,13 +188,13 @@ class TrekApi(Resource):
         if trek:
             for booking in trek.bookings:
                 if booking.trekker:
-                    update_message.delay(booking.trekker.username)
+                    safe_update_message(booking.trekker.username)
 
             Booking.query.filter_by(trek_id=trek.id).delete()
 
             db.session.delete(trek)
             db.session.commit()
-            cache.delete('treks_data')
+            safe_cache_delete('treks_data')
 
             return {
                 "message": "deleted successfully"
@@ -252,7 +271,7 @@ class BookingApi(Resource):
             booking = Booking()
             booking.trek_id = args['trek_id']
             booking.user_id = current_user.id
-            booking.booking_date = datetime.now()
+            booking.booking_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             booking.total_amount = args['total_amount']
             booking.payment_status = args['payment_status']
             booking.booking_status = args['booking_status']
@@ -302,8 +321,8 @@ class BookingApi(Resource):
             booking.booking_status = 'Cancelled'
             booking.payment_status = 'Cancelled'
             db.session.commit()
-            cache.delete('treks_data')
-            update_message.delay(booking.trekker.username)
+            safe_cache_delete('treks_data')
+            safe_update_message(booking.trekker.username if booking.trekker else None)
             return {
                 "message": "Booking cancelled successfully"
             }, 200
@@ -315,8 +334,8 @@ class BookingApi(Resource):
                     booking.payment_status = 'Paid'
                     booking.booking_status = "Booked"
                     db.session.commit()
-                    cache.delete('treks_data')
-                    update_message.delay(booking.trekker.username)
+                    safe_cache_delete('treks_data')
+                    safe_update_message(booking.trekker.username if booking.trekker else None)
                     return {
                         "message": "Booking confirmed"
                     }, 200
