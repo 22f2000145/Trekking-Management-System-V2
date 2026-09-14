@@ -3,7 +3,7 @@ from celery import shared_task
 from .models import Booking, Trek, User
 from .database import db
 import csv
-from .utils import format_report, send_email
+from .utils import format_report, send_email, get_template_path, get_smtp_config
 import requests
 
 
@@ -34,6 +34,13 @@ def export_bookings_csv(user_id=None, guide_id=None):
 
 @shared_task(ignore_result=False, name="monthly_report")
 def monthly_report():
+    # Get SMTP config once at the start
+    smtp_host, smtp_port, sender, password = get_smtp_config()
+
+    # Get the absolute template paths (works in both Flask and Celery contexts)
+    user_template_path = get_template_path("mail_details.html")
+    admin_template_path = get_template_path("admin_monthly_report.html")
+
     users = User.query.all()
     all_users_data = []  
 
@@ -58,20 +65,39 @@ def monthly_report():
         user_data["bookings"] = user_bookings
         all_users_data.append(user_data)
 
-        with open("templates/mail_details.html", "r") as f:
-            template_content = f.read()
-            message = format_report(template_content, {"data": user_data})
-            send_email(user.email, "Monthly Report", message)
+        # Render the user template and send email
+        try:
+            message = format_report(user_template_path, {"data": user_data})
+            send_email(
+                to_address=user.email,
+                subject="Monthly Report",
+                content_body=message,
+                smtp_host=smtp_host,
+                smtp_port=smtp_port,
+                sender=sender,
+                password=password
+            )
+        except Exception as e:
+            print(f"[TASK ERROR] Failed to send monthly report to {user.email}: {e}")
 
-    with open("templates/admin_monthly_report.html", "r") as f:
-        admin_template = f.read()
+    # Send admin summary
+    try:
+        admin_message = format_report(admin_template_path, {"all_users": all_users_data})
 
-    admin_message = format_report(admin_template, {"all_users": all_users_data})
-
-    for user in users:
-        admin_roles = [r.name for r in user.roles]
-        if "admin" in admin_roles:
-            send_email(user.email, "Monthly Report - Admin Summary", admin_message)
+        for user in users:
+            admin_roles = [r.name for r in user.roles]
+            if "admin" in admin_roles:
+                send_email(
+                    to_address=user.email,
+                    subject="Monthly Report - Admin Summary",
+                    content_body=admin_message,
+                    smtp_host=smtp_host,
+                    smtp_port=smtp_port,
+                    sender=sender,
+                    password=password
+                )
+    except Exception as e:
+        print(f"[TASK ERROR] Failed to send admin monthly report: {e}")
 
     return "Monthly Report Sent"
 
